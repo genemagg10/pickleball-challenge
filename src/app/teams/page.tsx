@@ -10,8 +10,12 @@ export default async function TeamsPage() {
     include: {
       players: {
         orderBy: { name: "asc" },
-        include: { user: { select: { name: true } } },
+        include: {
+          user: { select: { name: true } },
+          _count: { select: { fans: true } },
+        },
       },
+      _count: { select: { fans: true } },
     },
     orderBy: { createdAt: "asc" },
   });
@@ -37,19 +41,25 @@ export default async function TeamsPage() {
               <h2 className="text-lg font-bold" style={{ color: t.color }}>
                 {t.emoji} {t.name}
               </h2>
-              <p className="text-xs text-slate-500">{t.players.length} players</p>
+              <p className="text-xs text-slate-500">
+                {t.players.length} player{t.players.length === 1 ? "" : "s"} ·{" "}
+                {t._count.fans} fan{t._count.fans === 1 ? "" : "s"}
+              </p>
               <ul className="mt-3 space-y-1 text-sm">
                 {t.players.length === 0 ? (
                   <li className="text-slate-500">No players yet.</li>
                 ) : (
                   t.players.map((p) => (
-                    <li key={p.id} className="flex items-center justify-between">
+                    <li key={p.id} className="flex items-center justify-between gap-2">
                       <span>{p.name}</span>
-                      {p.user && (
-                        <span className="text-xs text-slate-500">
-                          @{p.user.name}
-                        </span>
-                      )}
+                      <span className="flex items-center gap-2 text-xs text-slate-500">
+                        {p.user && <span>@{p.user.name}</span>}
+                        {p._count.fans > 0 && (
+                          <span title={`${p._count.fans} personal fan${p._count.fans === 1 ? "" : "s"}`}>
+                            🙌 {p._count.fans}
+                          </span>
+                        )}
+                      </span>
                     </li>
                   ))
                 )}
@@ -58,6 +68,15 @@ export default async function TeamsPage() {
           </div>
         ))}
       </div>
+      {session?.user && (
+        <p className="text-sm text-slate-500">
+          Pick who you&apos;re cheering for in{" "}
+          <Link href="/me" className="text-court underline">
+            your profile
+          </Link>
+          .
+        </p>
+      )}
     </div>
   );
 }

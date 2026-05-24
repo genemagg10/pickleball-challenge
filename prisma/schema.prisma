@@ -18,6 +18,11 @@ model User {
   championPickTeamId String?
   championPickTeam   Team?   @relation("OverallChampionPick", fields: [championPickTeamId], references: [id], onDelete: SetNull)
 
+  rootingForTeamId String?
+  rootingForTeam   Team?    @relation("FanOfTeam", fields: [rootingForTeamId], references: [id], onDelete: SetNull)
+  rootingForPlayerId String?
+  rootingForPlayer   Player? @relation("FanOfPlayer", fields: [rootingForPlayerId], references: [id], onDelete: SetNull)
+
   player       Player?
   predictions  Prediction[]
   comments     Comment[]
@@ -37,6 +42,7 @@ model Team {
   matchupSideB     Matchup[]    @relation("MatchupTeamB")
   predictions      Prediction[]
   championPicks    User[]       @relation("OverallChampionPick")
+  fans             User[]       @relation("FanOfTeam")
 }
 
 model Player {
@@ -49,6 +55,7 @@ model Player {
   createdAt DateTime @default(now())
 
   matchupParticipations MatchupParticipant[]
+  fans                  User[]               @relation("FanOfPlayer")
 }
 
 enum EventStatus {

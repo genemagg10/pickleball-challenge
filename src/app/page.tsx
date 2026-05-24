@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getStandings } from "@/lib/scoring";
 import { Scoreboard } from "@/components/Scoreboard";
 import { EventCard } from "@/components/EventCard";
+import { FanBadge } from "@/components/FanBadge";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,15 @@ export default async function HomePage() {
     }),
     prisma.comment.findMany({
       where: { eventId: null },
-      include: { user: { select: { name: true } } },
+      include: {
+        user: {
+          select: {
+            name: true,
+            rootingForTeam: true,
+            rootingForPlayer: { select: { id: true, name: true, teamId: true } },
+          },
+        },
+      },
       orderBy: { createdAt: "desc" },
       take: 3,
     }),
@@ -85,8 +94,13 @@ export default async function HomePage() {
           ) : (
             recentComments.map((c) => (
               <div key={c.id} className="text-sm">
-                <span className="font-semibold">{c.user.name}: </span>
-                <span className="text-slate-700">{c.body}</span>
+                <span className="font-semibold">{c.user.name}</span>{" "}
+                <FanBadge
+                  team={c.user.rootingForTeam}
+                  player={c.user.rootingForPlayer}
+                  size="xs"
+                />
+                <span className="text-slate-700">: {c.body}</span>
               </div>
             ))
           )}

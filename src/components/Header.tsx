@@ -3,8 +3,18 @@
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
+import { FanBadge } from "@/components/FanBadge";
 
-type HeaderUser = { id: string; name: string; isAdmin: boolean } | null;
+type TeamLite = { id: string; name: string; color: string; emoji: string | null };
+type PlayerLite = { id: string; name: string; teamId: string };
+
+type HeaderUser = {
+  id: string;
+  name: string;
+  isAdmin: boolean;
+  rootingForTeam: TeamLite | null;
+  rootingForPlayer: PlayerLite | null;
+} | null;
 
 const links = [
   { href: "/", label: "Scoreboard" },
@@ -54,7 +64,24 @@ export function Header({ user }: { user: HeaderUser }) {
         <div className="flex items-center gap-2 text-sm">
           {user ? (
             <>
-              <span className="text-slate-600 hidden sm:inline">Hi, {user.name}</span>
+              <Link
+                href="/me"
+                className="hidden sm:flex items-center gap-2 text-slate-600 hover:text-slate-900"
+                title="Your profile"
+              >
+                <span>{user.name}</span>
+                {user.rootingForTeam ? (
+                  <FanBadge
+                    team={user.rootingForTeam}
+                    player={user.rootingForPlayer}
+                    size="xs"
+                  />
+                ) : (
+                  <span className="badge bg-slate-100 text-slate-600 px-1.5 py-0.5 text-[10px]">
+                    Pick a team
+                  </span>
+                )}
+              </Link>
               <button
                 onClick={() => signOut({ callbackUrl: "/" })}
                 className="btn-secondary"

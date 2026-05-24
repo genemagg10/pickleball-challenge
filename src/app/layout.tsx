@@ -3,6 +3,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { Header } from "@/components/Header";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 
 export const metadata: Metadata = {
   title: "Burton Valley Dads' Pickleball Challenge",
@@ -11,6 +12,15 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
+  const rooting = session?.user
+    ? await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: {
+          rootingForTeam: true,
+          rootingForPlayer: { select: { id: true, name: true, teamId: true } },
+        },
+      })
+    : null;
   return (
     <html lang="en">
       <body className="min-h-screen flex flex-col">
@@ -22,6 +32,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     id: session.user.id,
                     name: session.user.name ?? "Player",
                     isAdmin: session.user.isAdmin,
+                    rootingForTeam: rooting?.rootingForTeam ?? null,
+                    rootingForPlayer: rooting?.rootingForPlayer ?? null,
                   }
                 : null
             }

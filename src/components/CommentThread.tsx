@@ -2,12 +2,21 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { FanBadge } from "@/components/FanBadge";
+
+type TeamLite = { id: string; name: string; color: string; emoji: string | null };
+type PlayerLite = { id: string; name: string; teamId: string };
 
 type Comment = {
   id: string;
   body: string;
   createdAt: string | Date;
-  user: { id: string; name: string };
+  user: {
+    id: string;
+    name: string;
+    rootingForTeam: TeamLite | null;
+    rootingForPlayer: PlayerLite | null;
+  };
 };
 
 type Props = {
@@ -60,8 +69,15 @@ export function CommentThread({ eventId, comments, loggedIn, currentUserId }: Pr
               key={c.id}
               className="rounded-lg border border-slate-200 bg-white p-3 text-sm"
             >
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-semibold text-slate-800">{c.user.name}</span>
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-semibold text-slate-800">{c.user.name}</span>
+                  <FanBadge
+                    team={c.user.rootingForTeam}
+                    player={c.user.rootingForPlayer}
+                    size="xs"
+                  />
+                </div>
                 <span className="text-xs text-slate-500">
                   {new Date(c.createdAt).toLocaleString()}
                 </span>

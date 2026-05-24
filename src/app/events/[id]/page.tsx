@@ -31,7 +31,18 @@ export default async function EventDetailPage({
         },
         comments: {
           orderBy: { createdAt: "desc" },
-          include: { user: { select: { id: true, name: true } } },
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                rootingForTeam: true,
+                rootingForPlayer: {
+                  select: { id: true, name: true, teamId: true },
+                },
+              },
+            },
+          },
         },
         predictions: { select: { userId: true, pickedTeamId: true } },
       },

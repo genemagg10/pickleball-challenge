@@ -10,7 +10,16 @@ export default async function LoungePage() {
   const comments = await prisma.comment.findMany({
     where: { eventId: null },
     orderBy: { createdAt: "desc" },
-    include: { user: { select: { id: true, name: true } } },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          rootingForTeam: true,
+          rootingForPlayer: { select: { id: true, name: true, teamId: true } },
+        },
+      },
+    },
     take: 100,
   });
 
