@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  name         String
+  passwordHash String
+  isAdmin      Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+
+  championPickTeamId String?
+  championPickTeam   Team?   @relation("OverallChampionPick", fields: [championPickTeamId], references: [id], onDelete: SetNull)
+
+  player       Player?
+  predictions  Prediction[]
+  comments     Comment[]
+}
+
+model Team {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  color     String
+  emoji     String?
+  createdAt DateTime @default(now())
+
+  players          Player[]
+  wonEvents        Event[]      @relation("EventWinner")
+  wonMatchups      Matchup[]    @relation("MatchupWinner")
+  matchupSideA     Matchup[]    @relation("MatchupTeamA")
+  matchupSideB     Matchup[]    @relation("MatchupTeamB")
+  predictions      Prediction[]
+  championPicks    User[]       @relation("OverallChampionPick")
+}
+
+model Player {
+  id        String   @id @default(cuid())
+  name      String
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId    String?  @unique
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+
+  matchupParticipations MatchupParticipant[]
+}
+
+enum EventStatus {
+  UPCOMING
+  IN_PROGRESS
+  COMPLETED
+}
+
+model Event {
+  id          String      @id @default(cuid())
+  name        String
+  description String      @default("")
+  location    String      @default("")
+  startsAt    DateTime?
+  pointsValue Int         @default(1)
+  status      EventStatus @default(UPCOMING)
+  sortOrder   Int         @default(0)
+  createdAt   DateTime    @default(now())
+
+  winnerTeamId String?
+  winnerTeam   Team?   @relation("EventWinner", fields: [winnerTeamId], references: [id], onDelete: SetNull)
+  scoreA       Int?
+  scoreB       Int?
+  resultNotes  String?
+
+  matchups    Matchup[]
+  predictions Prediction[]
+  comments    Comment[]
+}
+
+model Matchup {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  label     String   @default("")
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  teamAId String
+  teamA   Team   @relation("MatchupTeamA", fields: [teamAId], references: [id], onDelete: Cascade)
+  teamBId String
+  teamB   Team   @relation("MatchupTeamB", fields: [teamBId], references: [id], onDelete: Cascade)
+
+  scoreA       Int?
+  scoreB       Int?
+  winnerTeamId String?
+  winnerTeam   Team?   @relation("MatchupWinner", fields: [winnerTeamId], references: [id], onDelete: SetNull)
+
+  participants MatchupParticipant[]
+}
+
+model MatchupParticipant {
+  id        String  @id @default(cuid())
+  matchupId String
+  matchup   Matchup @relation(fields: [matchupId], references: [id], onDelete: Cascade)
+  playerId  String
+  player    Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  side      String
+
+  @@unique([matchupId, playerId])
+}
+
+model Prediction {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  pickedTeamId String?
+  pickedTeam   Team?   @relation(fields: [pickedTeamId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, eventId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  body      String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId   String?
+  event     Event?   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([eventId, createdAt])
+}
