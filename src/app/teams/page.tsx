@@ -111,7 +111,7 @@ export default async function TeamsPage() {
                                     aria-label="Team captain"
                                     title={`Captain of ${t.name}`}
                                   >
-                                    🧢
+                                    👑
                                   </span>
                                 )}
                                 <span className="truncate">{p.name}</span>

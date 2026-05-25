@@ -196,7 +196,7 @@ export default async function PlayerProfilePage({
                   title={`Captain of ${player.team.name}`}
                   aria-label="Team captain"
                 >
-                  🧢
+                  👑
                 </span>
               )}
             </h1>
@@ -210,7 +210,7 @@ export default async function PlayerProfilePage({
                 {player.team.emoji} {player.team.name}
               </span>
               {player.isCaptain && (
-                <span className="kicker">· 🧢 CAPTAIN</span>
+                <span className="kicker">· 👑 CAPTAIN</span>
               )}
               {player.user && (
                 <span className="kicker">· @{player.user.name}</span>

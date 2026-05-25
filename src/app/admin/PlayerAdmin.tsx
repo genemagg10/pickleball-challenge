@@ -110,7 +110,7 @@ export function PlayerAdmin({
                   defaultChecked={p.isCaptain}
                   onChange={(e) => update(p.id, { isCaptain: e.target.checked })}
                 />
-                <span aria-hidden>🧢</span>
+                <span aria-hidden>👑</span>
                 <span>Captain</span>
               </label>
               <button onClick={() => remove(p.id)} className="btn-danger">
