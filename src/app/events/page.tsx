@@ -7,10 +7,19 @@ export const dynamic = "force-dynamic";
 
 export default async function EventsPage() {
   const session = await auth();
-  const events = await prisma.event.findMany({
-    include: { winnerTeam: true },
-    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-  });
+  const [events, teams] = await Promise.all([
+    prisma.event.findMany({
+      include: {
+        winnerTeam: true,
+        matchups: { select: { winnerTeamId: true } },
+      },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    }),
+    prisma.team.findMany({
+      select: { id: true, name: true, color: true, emoji: true },
+      orderBy: { createdAt: "asc" },
+    }),
+  ]);
 
   return (
     <div className="space-y-4">
@@ -29,7 +38,7 @@ export default async function EventsPage() {
       ) : (
         <div className="grid sm:grid-cols-2 gap-3">
           {events.map((e) => (
-            <EventCard key={e.id} event={e} />
+            <EventCard key={e.id} event={e} teams={teams} />
           ))}
         </div>
       )}

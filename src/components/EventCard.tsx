@@ -1,7 +1,12 @@
 import Link from "next/link";
 import type { Event, Team } from "@prisma/client";
 
-type EventWithWinner = Event & { winnerTeam: Team | null };
+type EventWithScoring = Event & {
+  winnerTeam: Team | null;
+  matchups: { winnerTeamId: string | null }[];
+};
+
+type TeamLite = { id: string; name: string; color: string; emoji: string | null };
 
 const statusStyles: Record<string, string> = {
   UPCOMING: "bg-paper-dark text-ink-soft border-ink/15",
@@ -9,7 +14,22 @@ const statusStyles: Record<string, string> = {
   COMPLETED: "bg-emerald-100 text-emerald-800 border-emerald-300",
 };
 
-export function EventCard({ event }: { event: EventWithWinner }) {
+export function EventCard({
+  event,
+  teams,
+}: {
+  event: EventWithScoring;
+  teams: TeamLite[];
+}) {
+  const totalMatchups = event.matchups.length;
+  const settled = event.matchups.filter((m) => m.winnerTeamId).length;
+  const wins: Record<string, number> = {};
+  for (const t of teams) wins[t.id] = 0;
+  for (const m of event.matchups) {
+    if (m.winnerTeamId && wins[m.winnerTeamId] != null) wins[m.winnerTeamId] += 1;
+  }
+  const showScore = settled > 0;
+
   return (
     <Link
       href={`/events/${event.id}`}
@@ -45,6 +65,27 @@ export function EventCard({ event }: { event: EventWithWinner }) {
           <span className="kicker">{new Date(event.startsAt).toLocaleString()}</span>
         ) : null}
       </div>
+      {showScore && (
+        <div className="mt-3 pt-3 border-t border-ink/10 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-3 flex-wrap">
+            {teams.map((t) => (
+              <span key={t.id} className="flex items-center gap-1.5">
+                <span
+                  className="h-2 w-2 rounded-full shrink-0"
+                  style={{ backgroundColor: t.color }}
+                  aria-hidden
+                />
+                <span className="stat-num text-base text-ink">
+                  {wins[t.id] * event.pointsValue}
+                </span>
+              </span>
+            ))}
+          </div>
+          <span className="kicker">
+            {settled}/{totalMatchups} SETTLED
+          </span>
+        </div>
+      )}
     </Link>
   );
 }
