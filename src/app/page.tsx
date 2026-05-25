@@ -9,7 +9,15 @@ import { getLoungeFeed } from "@/lib/loungeFeed";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [standings, events, feedItems, teams] = await Promise.all([
+  const [
+    standings,
+    events,
+    feedItems,
+    teams,
+    totalEvents,
+    openEvents,
+    openMatchups,
+  ] = await Promise.all([
     getStandings(),
     prisma.event.findMany({
       include: {
@@ -21,9 +29,14 @@ export default async function HomePage() {
     }),
     getLoungeFeed({ take: 5 }),
     prisma.team.findMany({ include: { _count: { select: { players: true } } } }),
+    prisma.event.count(),
+    prisma.event.count({ where: { status: { not: "COMPLETED" } } }),
+    prisma.matchup.count({ where: { winnerTeamId: null } }),
   ]);
 
   const noTeams = teams.length < 2;
+  const tournamentFinalized =
+    totalEvents > 0 && openEvents === 0 && openMatchups === 0;
 
   return (
     <div className="space-y-8">
@@ -33,7 +46,7 @@ export default async function HomePage() {
           title="Scoreboard"
           link={{ href: "/leaderboard", label: "Picks leaderboard" }}
         />
-        <Scoreboard standings={standings} />
+        <Scoreboard standings={standings} finalized={tournamentFinalized} />
         {noTeams && (
           <div className="text-sm text-ink-soft mt-2">
             An admin needs to set up the two teams in /admin before scoring works.

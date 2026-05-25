@@ -22,12 +22,6 @@ export default async function LeaderboardPage() {
           where: { id: userId },
           include: {
             championPickTeam: true,
-            predictions: {
-              include: {
-                event: { include: { winnerTeam: true } },
-                pickedTeam: true,
-              },
-            },
             matchupPredictions: {
               include: {
                 matchup: {
@@ -133,19 +127,6 @@ type TeamLite = { id: string; name: string; color: string; emoji: string | null 
 
 type MeWithPicks = {
   championPickTeam: TeamLite | null;
-  predictions: {
-    id: string;
-    pickedTeamId: string | null;
-    pickedTeam: TeamLite | null;
-    event: {
-      id: string;
-      name: string;
-      sortOrder: number;
-      status: string;
-      winnerTeamId: string | null;
-      winnerTeam: TeamLite | null;
-    };
-  }[];
   matchupPredictions: {
     id: string;
     pickedTeamId: string;
@@ -179,11 +160,6 @@ function YourPicks({ me }: { me: MeWithPicks }) {
     eventName: string;
     sortOrder: number;
     status: string;
-    eventPick: {
-      pickedTeam: TeamLite | null;
-      winnerTeam: TeamLite | null;
-      settled: boolean;
-    } | null;
     matchupPicks: {
       matchupId: string;
       label: string;
@@ -207,23 +183,12 @@ function YourPicks({ me }: { me: MeWithPicks }) {
         eventName: name,
         sortOrder,
         status,
-        eventPick: null,
         matchupPicks: [],
       };
       blocks.set(eventId, b);
     }
     return b;
   };
-
-  for (const p of me.predictions) {
-    if (!p.pickedTeamId) continue;
-    const b = ensure(p.event.id, p.event.name, p.event.sortOrder, p.event.status);
-    b.eventPick = {
-      pickedTeam: p.pickedTeam,
-      winnerTeam: p.event.winnerTeam,
-      settled: p.event.status === "COMPLETED" && p.event.winnerTeamId != null,
-    };
-  }
 
   for (const mp of me.matchupPredictions) {
     const b = ensure(
@@ -247,10 +212,6 @@ function YourPicks({ me }: { me: MeWithPicks }) {
   let correct = 0;
   let total = 0;
   for (const b of blocks.values()) {
-    if (b.eventPick?.settled && b.eventPick.pickedTeam) {
-      total += 1;
-      if (b.eventPick.pickedTeam.id === b.eventPick.winnerTeam?.id) correct += 1;
-    }
     for (const m of b.matchupPicks) {
       if (m.settled) {
         total += 1;
@@ -296,11 +257,11 @@ function YourPicks({ me }: { me: MeWithPicks }) {
 
       {ordered.length === 0 ? (
         <div className="text-sm text-ink-soft">
-          No event or matchup picks yet. Browse{" "}
+          No matchup picks yet. Browse{" "}
           <Link href="/events" className="text-ink underline underline-offset-2">
             events
-          </Link>
-          .
+          </Link>{" "}
+          and pick a winner for each matchup.
         </div>
       ) : (
         ordered.map((b) => (
@@ -314,14 +275,6 @@ function YourPicks({ me }: { me: MeWithPicks }) {
               </Link>
               <span className="kicker">{b.status.replace("_", " ").toLowerCase()}</span>
             </div>
-            {b.eventPick && b.eventPick.pickedTeam && (
-              <PickRow
-                label="Event winner"
-                pickedTeam={b.eventPick.pickedTeam}
-                winnerTeam={b.eventPick.winnerTeam}
-                settled={b.eventPick.settled}
-              />
-            )}
             {b.matchupPicks.map((m) => (
               <PickRow
                 key={m.matchupId}
