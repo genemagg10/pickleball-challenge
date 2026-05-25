@@ -191,12 +191,8 @@ export default async function EventDetailPage({
                   {m.label && <div className="kicker">{m.label}</div>}
                   <div className="grid grid-cols-[1fr_auto_1fr] items-stretch gap-2 text-sm">
                     <div
-                      className={`rounded-md p-2 border transition ${
-                        aWon
-                          ? "bg-emerald-50 border-emerald-300"
-                          : bWon
-                          ? "border-transparent opacity-60"
-                          : "border-transparent"
+                      className={`rounded-md p-2 transition ${
+                        bWon ? "opacity-60" : ""
                       }`}
                     >
                       <div className="text-ink font-medium">
@@ -217,19 +213,14 @@ export default async function EventDetailPage({
                       </div>
                       <div className="kicker mt-0.5" style={{ color: m.teamA.color }}>
                         {m.teamA.name}
-                        {aWon && <span className="ml-1 text-emerald-700">✓ WIN</span>}
                       </div>
                     </div>
                     <div className="text-center stat-num text-xl text-ink self-center">
                       {m.scoreA ?? "–"} : {m.scoreB ?? "–"}
                     </div>
                     <div
-                      className={`rounded-md p-2 border text-right transition ${
-                        bWon
-                          ? "bg-emerald-50 border-emerald-300"
-                          : aWon
-                          ? "border-transparent opacity-60"
-                          : "border-transparent"
+                      className={`rounded-md p-2 text-right transition ${
+                        aWon ? "opacity-60" : ""
                       }`}
                     >
                       <div className="text-ink font-medium">
@@ -250,7 +241,6 @@ export default async function EventDetailPage({
                       </div>
                       <div className="kicker mt-0.5" style={{ color: m.teamB.color }}>
                         {m.teamB.name}
-                        {bWon && <span className="ml-1 text-emerald-700">✓ WIN</span>}
                       </div>
                     </div>
                   </div>
