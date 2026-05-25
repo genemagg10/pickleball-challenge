@@ -11,7 +11,10 @@ export default async function HomePage() {
   const [standings, events, recentComments, teams] = await Promise.all([
     getStandings(),
     prisma.event.findMany({
-      include: { winnerTeam: true },
+      include: {
+        winnerTeam: true,
+        matchups: { select: { winnerTeamId: true } },
+      },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
       take: 6,
     }),
@@ -67,7 +70,7 @@ export default async function HomePage() {
         ) : (
           <div className="grid sm:grid-cols-2 gap-3">
             {events.map((e) => (
-              <EventCard key={e.id} event={e} />
+              <EventCard key={e.id} event={e} teams={teams} />
             ))}
           </div>
         )}
