@@ -32,9 +32,12 @@ export default async function LeaderboardPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <section>
-        <h1 className="text-xl font-bold mb-2">Overall Championship</h1>
+        <div className="mb-2">
+          <div className="section-kicker">// Champion</div>
+          <h1 className="text-2xl font-bold text-ink tracking-tight">Overall Championship</h1>
+        </div>
         <PredictionWidget
           teams={teams.map((t) => ({
             id: t.id,
@@ -51,37 +54,41 @@ export default async function LeaderboardPage() {
       </section>
 
       <section>
-        <h2 className="text-xl font-bold mb-2">Picks Leaderboard</h2>
-        <div className="card overflow-hidden">
+        <div className="mb-2">
+          <div className="section-kicker">// Rankings</div>
+          <h2 className="text-2xl font-bold text-ink tracking-tight">Picks Leaderboard</h2>
+        </div>
+        <div className="card overflow-hidden bg-paper">
           {leaderboard.length === 0 ? (
-            <div className="p-6 text-center text-sm text-slate-500">
+            <div className="p-6 text-center text-sm text-ink-soft">
               No completed events yet — leaderboard will fill in once events finish.
             </div>
           ) : (
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-slate-600 text-left">
-                <tr>
-                  <th className="p-3">#</th>
-                  <th className="p-3">Player</th>
-                  <th className="p-3 text-right">Correct</th>
-                  <th className="p-3 text-right">Of</th>
-                  <th className="p-3 text-right">Accuracy</th>
-                </tr>
-              </thead>
-              <tbody>
-                {leaderboard.map((row, i) => (
-                  <tr key={row.userId} className="border-t border-slate-200">
-                    <td className="p-3 font-semibold">{i + 1}</td>
-                    <td className="p-3">{row.name}</td>
-                    <td className="p-3 text-right tabular-nums">{row.correct}</td>
-                    <td className="p-3 text-right tabular-nums">{row.total}</td>
-                    <td className="p-3 text-right tabular-nums">
-                      {Math.round(row.accuracy * 100)}%
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="divide-y divide-ink/10">
+              {leaderboard.map((row, i) => {
+                const acc = Math.round(row.accuracy * 100);
+                return (
+                  <div
+                    key={row.userId}
+                    className="flex items-center gap-4 p-4"
+                  >
+                    <div className="w-10 h-10 flex items-center justify-center rounded-md bg-paper-dark border border-ink/10 font-mono font-bold text-ink">
+                      {i + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-ink truncate">{row.name}</div>
+                      <div className="kicker mt-0.5">
+                        {row.correct}/{row.total} correct
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="stat-num text-2xl text-ink">{acc}%</div>
+                      <div className="kicker">accuracy</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
       </section>

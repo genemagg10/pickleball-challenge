@@ -35,33 +35,31 @@ export default async function HomePage() {
   const noTeams = teams.length < 2;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <section>
-        <div className="flex items-end justify-between mb-2">
-          <h1 className="text-xl font-bold">Live Scoreboard</h1>
-          <Link href="/leaderboard" className="text-sm text-court hover:underline">
-            Picks leaderboard →
-          </Link>
-        </div>
+        <SectionHeader
+          kicker="Live"
+          title="Scoreboard"
+          link={{ href: "/leaderboard", label: "Picks leaderboard" }}
+        />
         <Scoreboard standings={standings} />
         {noTeams && (
-          <div className="text-sm text-slate-500 mt-2">
+          <div className="text-sm text-ink-soft mt-2">
             An admin needs to set up the two teams in /admin before scoring works.
           </div>
         )}
       </section>
 
       <section>
-        <div className="flex items-end justify-between mb-2">
-          <h2 className="text-xl font-bold">Events</h2>
-          <Link href="/events" className="text-sm text-court hover:underline">
-            View all →
-          </Link>
-        </div>
+        <SectionHeader
+          kicker="Schedule"
+          title="Events"
+          link={{ href: "/events", label: "View all" }}
+        />
         {events.length === 0 ? (
-          <div className="card p-6 text-center text-slate-500 text-sm">
+          <div className="card p-6 text-center text-ink-soft text-sm bg-paper">
             No events yet.{" "}
-            <Link href="/admin" className="text-court underline">
+            <Link href="/admin" className="text-ink underline underline-offset-2">
               Add one in admin
             </Link>
             .
@@ -76,17 +74,16 @@ export default async function HomePage() {
       </section>
 
       <section>
-        <div className="flex items-end justify-between mb-2">
-          <h2 className="text-xl font-bold">Lounge</h2>
-          <Link href="/lounge" className="text-sm text-court hover:underline">
-            All trash talk →
-          </Link>
-        </div>
-        <div className="card p-4 space-y-3">
+        <SectionHeader
+          kicker="Chatter"
+          title="Lounge"
+          link={{ href: "/lounge", label: "All trash talk" }}
+        />
+        <div className="card p-4 space-y-3 bg-paper">
           {recentComments.length === 0 ? (
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-ink-soft">
               No trash talk yet. Be the first.{" "}
-              <Link href="/lounge" className="text-court underline">
+              <Link href="/lounge" className="text-ink underline underline-offset-2">
                 Open the lounge
               </Link>
               .
@@ -94,18 +91,45 @@ export default async function HomePage() {
           ) : (
             recentComments.map((c) => (
               <div key={c.id} className="text-sm">
-                <span className="font-semibold">{c.user.name}</span>{" "}
+                <span className="font-semibold text-ink">{c.user.name}</span>{" "}
                 <FanBadge
                   team={c.user.rootingForTeam}
                   player={c.user.rootingForPlayer}
                   size="xs"
                 />
-                <span className="text-slate-700">: {c.body}</span>
+                <span className="text-ink-soft">: {c.body}</span>
               </div>
             ))
           )}
         </div>
       </section>
+    </div>
+  );
+}
+
+function SectionHeader({
+  kicker,
+  title,
+  link,
+}: {
+  kicker: string;
+  title: string;
+  link?: { href: string; label: string };
+}) {
+  return (
+    <div className="flex items-end justify-between mb-2">
+      <div>
+        <div className="section-kicker">// {kicker}</div>
+        <h2 className="text-2xl font-bold text-ink tracking-tight">{title}</h2>
+      </div>
+      {link && (
+        <Link
+          href={link.href}
+          className="kicker hover:text-ink transition"
+        >
+          {link.label} →
+        </Link>
+      )}
     </div>
   );
 }

@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { Header } from "@/components/Header";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
+const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap" });
+
 export const metadata: Metadata = {
-  title: "Burton Valley Dads' Pickleball Challenge",
+  title: "Pickle Palms 2026",
   description: "The official scoreboard, prediction market, and trash talk HQ.",
 };
 
@@ -22,8 +26,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       })
     : null;
   return (
-    <html lang="en">
-      <body className="min-h-screen flex flex-col">
+    <html lang="en" className={`${inter.variable} ${mono.variable}`}>
+      <body className="min-h-screen flex flex-col font-sans antialiased">
         <Providers>
           <Header
             user={
@@ -39,8 +43,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             }
           />
           <main className="flex-1 w-full max-w-5xl mx-auto px-4 py-6">{children}</main>
-          <footer className="border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-500">
-            Burton Valley Dads&apos; Pickleball Challenge
+          <footer className="border-t border-ink/10 py-4 text-center">
+            <span className="kicker">Pickle Palms 2026 · The Official Scoreboard</span>
           </footer>
         </Providers>
       </body>

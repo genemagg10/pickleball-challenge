@@ -1,4 +1,4 @@
-# Burton Valley Dads' Pickleball Challenge
+# Pickle Palms 2026
 
 A weekend-competition web app. Two teams, many events (pickleball being the
 main one), manual scoring, per-event prediction polls, comments, and login.
@@ -49,7 +49,7 @@ npm run dev
 
 After seeding, the default admin is:
 
-- **email**: `admin@burtonvalley.local` (or whatever you put in `ADMIN_EMAIL`)
+- **email**: `admin@picklepalms.local` (or whatever you put in `ADMIN_EMAIL`)
 - **password**: `changeme123`
 
 **Change this password immediately** by signing in, deleting the seeded user
