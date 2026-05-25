@@ -1,51 +1,37 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
-import { Scoreboard } from "@/components/Scoreboard";
-import { getStandings } from "@/lib/scoring";
-import { CrowdDonut, MatchupsByEventBar } from "./TeamCharts";
+import { CrowdDonut } from "./TeamCharts";
 
 export const dynamic = "force-dynamic";
 
 export default async function TeamsPage() {
   const session = await auth();
 
-  const [teams, standings, events] = await Promise.all([
-    prisma.team.findMany({
-      include: {
-        players: {
-          orderBy: { name: "asc" },
-          include: {
-            user: { select: { name: true } },
-            matchupParticipations: {
-              where: { matchup: { winnerTeamId: { not: null } } },
-              include: {
-                matchup: {
-                  select: {
-                    winnerTeamId: true,
-                    event: { select: { pointsValue: true } },
-                  },
+  const teams = await prisma.team.findMany({
+    include: {
+      players: {
+        orderBy: { name: "asc" },
+        include: {
+          user: { select: { name: true } },
+          matchupParticipations: {
+            where: { matchup: { winnerTeamId: { not: null } } },
+            include: {
+              matchup: {
+                select: {
+                  winnerTeamId: true,
+                  event: { select: { pointsValue: true } },
                 },
               },
             },
-            _count: { select: { fans: true } },
           },
-        },
-        _count: { select: { fans: true, championPicks: true } },
-      },
-      orderBy: { createdAt: "asc" },
-    }),
-    getStandings(),
-    prisma.event.findMany({
-      include: {
-        matchups: {
-          where: { winnerTeamId: { not: null } },
-          select: { winnerTeamId: true },
+          _count: { select: { fans: true } },
         },
       },
-      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-    }),
-  ]);
+      _count: { select: { fans: true, championPicks: true } },
+    },
+    orderBy: { createdAt: "asc" },
+  });
 
   // Points contributed per player, computed once
   const pointsByPlayer = new Map<string, number>();
@@ -59,49 +45,13 @@ export default async function TeamsPage() {
   }
   const maxPts = Math.max(1, ...Array.from(pointsByPlayer.values()));
 
-  // Bar chart: matchups won per event (one bar per team)
-  const eventChartData = events
-    .filter((e) => e.matchups.length > 0)
-    .map((e) => {
-      const row: Record<string, string | number> = { event: e.name };
-      for (const t of teams) row[t.name] = 0;
-      for (const m of e.matchups) {
-        const team = teams.find((t) => t.id === m.winnerTeamId);
-        if (team) row[team.name] = (row[team.name] as number) + 1;
-      }
-      return row;
-    });
-
   return (
     <div className="space-y-8">
-      <section>
-        <div className="section-kicker">// Live</div>
-        <h1 className="text-2xl font-bold text-ink tracking-tight mb-2">
-          Scoreboard
-        </h1>
-        <Scoreboard standings={standings} />
-      </section>
-
-      {eventChartData.length > 0 && (
-        <section>
-          <div className="section-kicker">// Head-to-head</div>
-          <h2 className="text-2xl font-bold text-ink tracking-tight mb-2">
-            Matchups won per event
-          </h2>
-          <div className="card p-4 bg-paper">
-            <MatchupsByEventBar
-              data={eventChartData}
-              teams={teams.map((t) => ({ name: t.name, color: t.color }))}
-            />
-          </div>
-        </section>
-      )}
-
       <section>
         <div className="flex items-end justify-between mb-2">
           <div>
             <div className="section-kicker">// Rosters</div>
-            <h2 className="text-2xl font-bold text-ink tracking-tight">Teams</h2>
+            <h1 className="text-2xl font-bold text-ink tracking-tight">Teams</h1>
           </div>
           {session?.user?.isAdmin && (
             <Link href="/admin" className="btn-secondary">
