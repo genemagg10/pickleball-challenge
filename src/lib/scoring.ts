@@ -38,31 +38,52 @@ export type PredictionLeader = {
 };
 
 export async function getPredictionLeaderboard(): Promise<PredictionLeader[]> {
-  const completedEvents = await prisma.event.findMany({
-    where: { status: "COMPLETED", winnerTeamId: { not: null } },
-    select: { id: true, winnerTeamId: true },
-  });
-  if (completedEvents.length === 0) return [];
+  const [completedEvents, settledMatchups, eventPredictions, matchupPredictions] =
+    await Promise.all([
+      prisma.event.findMany({
+        where: { status: "COMPLETED", winnerTeamId: { not: null } },
+        select: { id: true, winnerTeamId: true },
+      }),
+      prisma.matchup.findMany({
+        where: { winnerTeamId: { not: null } },
+        select: { id: true, winnerTeamId: true },
+      }),
+      prisma.prediction.findMany({
+        include: { user: { select: { id: true, name: true } } },
+      }),
+      prisma.matchupPrediction.findMany({
+        include: { user: { select: { id: true, name: true } } },
+      }),
+    ]);
 
-  const eventIds = completedEvents.map((e) => e.id);
   const winnerByEvent = new Map(completedEvents.map((e) => [e.id, e.winnerTeamId!]));
-
-  const predictions = await prisma.prediction.findMany({
-    where: { eventId: { in: eventIds } },
-    include: { user: { select: { id: true, name: true } } },
-  });
+  const winnerByMatchup = new Map(settledMatchups.map((m) => [m.id, m.winnerTeamId!]));
 
   const byUser = new Map<string, PredictionLeader>();
-  for (const p of predictions) {
-    if (!p.eventId || !p.pickedTeamId) continue;
+  const upsert = (userId: string, name: string) => {
+    let entry = byUser.get(userId);
+    if (!entry) {
+      entry = { userId, name, correct: 0, total: 0, accuracy: 0 };
+      byUser.set(userId, entry);
+    }
+    return entry;
+  };
+
+  for (const p of eventPredictions) {
+    if (!p.pickedTeamId) continue;
     const winner = winnerByEvent.get(p.eventId);
     if (!winner) continue;
-    const entry =
-      byUser.get(p.userId) ??
-      { userId: p.userId, name: p.user.name, correct: 0, total: 0, accuracy: 0 };
+    const entry = upsert(p.userId, p.user.name);
     entry.total += 1;
     if (p.pickedTeamId === winner) entry.correct += 1;
-    byUser.set(p.userId, entry);
+  }
+
+  for (const p of matchupPredictions) {
+    const winner = winnerByMatchup.get(p.matchupId);
+    if (!winner) continue;
+    const entry = upsert(p.userId, p.user.name);
+    entry.total += 1;
+    if (p.pickedTeamId === winner) entry.correct += 1;
   }
 
   const list = Array.from(byUser.values()).map((u) => ({

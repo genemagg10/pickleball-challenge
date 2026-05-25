@@ -27,6 +27,9 @@ export default async function EventDetailPage({
             teamB: true,
             winnerTeam: true,
             participants: { include: { player: true } },
+            predictions: {
+              include: { user: { select: { id: true, name: true } } },
+            },
           },
         },
         comments: {
@@ -44,7 +47,9 @@ export default async function EventDetailPage({
             },
           },
         },
-        predictions: { select: { userId: true, pickedTeamId: true } },
+        predictions: {
+          include: { user: { select: { id: true, name: true } } },
+        },
       },
     }),
     prisma.team.findMany({ orderBy: { createdAt: "asc" } }),
@@ -52,44 +57,48 @@ export default async function EventDetailPage({
 
   if (!event) notFound();
 
-  const totals: Record<string, number> = {};
-  for (const t of teams) totals[t.id] = 0;
+  const teamById = new Map(teams.map((t) => [t.id, t]));
+
+  const eventTotals: Record<string, number> = {};
+  for (const t of teams) eventTotals[t.id] = 0;
   for (const p of event.predictions) {
-    if (p.pickedTeamId) totals[p.pickedTeamId] = (totals[p.pickedTeamId] || 0) + 1;
+    if (p.pickedTeamId) eventTotals[p.pickedTeamId] = (eventTotals[p.pickedTeamId] || 0) + 1;
   }
-  const totalCount = event.predictions.length;
-  const myPick =
-    userId
-      ? event.predictions.find((p) => p.userId === userId)?.pickedTeamId ?? null
-      : null;
+  const eventTotalCount = event.predictions.length;
+  const myEventPick = userId
+    ? event.predictions.find((p) => p.userId === userId)?.pickedTeamId ?? null
+    : null;
+
+  const isCompleted = event.status === "COMPLETED";
 
   return (
     <div className="space-y-6">
       <div>
-        <Link href="/events" className="text-sm text-court hover:underline">
+        <Link href="/events" className="kicker hover:text-ink transition">
           ← All events
         </Link>
         <div className="flex items-start justify-between gap-3 mt-2">
           <div>
-            <h1 className="text-2xl font-bold">{event.name}</h1>
+            <div className="section-kicker">// Event</div>
+            <h1 className="text-2xl font-bold text-ink tracking-tight">{event.name}</h1>
             {event.location && (
-              <p className="text-sm text-slate-500">{event.location}</p>
+              <p className="kicker mt-1">{event.location}</p>
             )}
             {event.startsAt && (
-              <p className="text-sm text-slate-500">
+              <p className="kicker">
                 {new Date(event.startsAt).toLocaleString()}
               </p>
             )}
           </div>
           <div className="text-right text-sm">
-            <div className="badge bg-slate-100 text-slate-700 mb-1">
+            <div className="badge bg-paper-dark text-ink-soft mb-1">
               {event.status.replace("_", " ").toLowerCase()}
             </div>
-            <div className="text-slate-600">Worth {event.pointsValue} pts</div>
+            <div className="kicker">{event.pointsValue} PTS</div>
             {session?.user?.isAdmin && (
               <Link
                 href={`/admin/events/${event.id}`}
-                className="text-court text-xs underline mt-1 inline-block"
+                className="kicker hover:text-ink underline underline-offset-2 mt-1 inline-block"
               >
                 Edit / Score
               </Link>
@@ -97,14 +106,15 @@ export default async function EventDetailPage({
           </div>
         </div>
         {event.description && (
-          <p className="mt-2 text-slate-700 whitespace-pre-wrap">{event.description}</p>
+          <p className="mt-3 text-ink-soft whitespace-pre-wrap">{event.description}</p>
         )}
 
         {event.winnerTeam && (
           <div
-            className="mt-3 rounded-lg p-3 text-sm"
+            className="mt-3 rounded-lg p-3 text-sm border"
             style={{
-              backgroundColor: event.winnerTeam.color + "1a",
+              backgroundColor: event.winnerTeam.color + "12",
+              borderColor: event.winnerTeam.color + "40",
               color: event.winnerTeam.color,
             }}
           >
@@ -115,16 +125,39 @@ export default async function EventDetailPage({
               <span> · final {event.scoreA}-{event.scoreB}</span>
             )}
             {event.resultNotes && (
-              <p className="mt-1 text-slate-700">{event.resultNotes}</p>
+              <p className="mt-1 text-ink-soft">{event.resultNotes}</p>
             )}
           </div>
         )}
       </div>
 
+      <section>
+        <div className="section-kicker">// Market</div>
+        <h2 className="text-lg font-bold text-ink tracking-tight mb-2">Event Prediction</h2>
+        <PredictionWidget
+          endpoint={`/api/events/${event.id}/predict`}
+          kicker="Event Pick"
+          title="Who wins this event?"
+          teams={teams.map((t) => ({
+            id: t.id,
+            name: t.name,
+            color: t.color,
+            emoji: t.emoji,
+          }))}
+          totals={eventTotals}
+          totalCount={eventTotalCount}
+          myPick={myEventPick}
+          locked={isCompleted}
+          winnerTeamId={event.winnerTeamId}
+          loggedIn={Boolean(userId)}
+        />
+      </section>
+
       {event.matchups.length > 0 && (
         <section>
-          <h2 className="text-lg font-semibold mb-2">Matchups</h2>
-          <div className="space-y-2">
+          <div className="section-kicker">// Matchups</div>
+          <h2 className="text-lg font-bold text-ink tracking-tight mb-2">Head-to-Head</h2>
+          <div className="space-y-3">
             {event.matchups.map((m) => {
               const sideA = m.participants
                 .filter((p) => p.side === "A")
@@ -134,40 +167,63 @@ export default async function EventDetailPage({
                 .filter((p) => p.side === "B")
                 .map((p) => p.player.name)
                 .join(" & ");
+              const matchupTeams = [m.teamA, m.teamB];
+              const matchupTotals: Record<string, number> = {
+                [m.teamAId]: 0,
+                [m.teamBId]: 0,
+              };
+              for (const p of m.predictions) {
+                matchupTotals[p.pickedTeamId] = (matchupTotals[p.pickedTeamId] || 0) + 1;
+              }
+              const matchupTotalCount = m.predictions.length;
+              const myMatchupPick = userId
+                ? m.predictions.find((p) => p.userId === userId)?.pickedTeamId ?? null
+                : null;
+              const matchupLocked = Boolean(m.winnerTeamId) || isCompleted;
+
               return (
-                <div key={m.id} className="card p-3">
-                  {m.label && (
-                    <div className="text-xs uppercase tracking-wide text-slate-500 mb-1">
-                      {m.label}
-                    </div>
-                  )}
-                  <div className="grid grid-cols-3 items-center text-sm">
+                <div key={m.id} className="card p-3 bg-paper space-y-3">
+                  {m.label && <div className="kicker">{m.label}</div>}
+                  <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-sm">
                     <div
-                      className={`font-medium ${
-                        m.winnerTeamId === m.teamAId ? "" : "text-slate-700"
-                      }`}
+                      className="font-medium"
                       style={{
                         color: m.winnerTeamId === m.teamAId ? m.teamA.color : undefined,
                       }}
                     >
-                      <div>{m.teamA.emoji} {sideA || "—"}</div>
-                      <div className="text-xs text-slate-500">{m.teamA.name}</div>
+                      <div className="text-ink">{m.teamA.emoji} {sideA || "—"}</div>
+                      <div className="kicker mt-0.5">{m.teamA.name}</div>
                     </div>
-                    <div className="text-center tabular-nums font-bold text-lg">
+                    <div className="text-center stat-num text-xl text-ink">
                       {m.scoreA ?? "–"} : {m.scoreB ?? "–"}
                     </div>
                     <div
-                      className={`text-right font-medium ${
-                        m.winnerTeamId === m.teamBId ? "" : "text-slate-700"
-                      }`}
+                      className="text-right font-medium"
                       style={{
                         color: m.winnerTeamId === m.teamBId ? m.teamB.color : undefined,
                       }}
                     >
-                      <div>{m.teamB.emoji} {sideB || "—"}</div>
-                      <div className="text-xs text-slate-500">{m.teamB.name}</div>
+                      <div className="text-ink">{m.teamB.emoji} {sideB || "—"}</div>
+                      <div className="kicker mt-0.5">{m.teamB.name}</div>
                     </div>
                   </div>
+                  <PredictionWidget
+                    endpoint={`/api/matchups/${m.id}/predict`}
+                    kicker="Matchup Pick"
+                    teams={matchupTeams.map((t) => ({
+                      id: t.id,
+                      name: t.name,
+                      color: t.color,
+                      emoji: t.emoji,
+                    }))}
+                    totals={matchupTotals}
+                    totalCount={matchupTotalCount}
+                    myPick={myMatchupPick}
+                    locked={matchupLocked}
+                    winnerTeamId={m.winnerTeamId}
+                    loggedIn={Boolean(userId)}
+                    compact
+                  />
                 </div>
               );
             })}
@@ -175,27 +231,11 @@ export default async function EventDetailPage({
         </section>
       )}
 
-      <section>
-        <h2 className="text-lg font-semibold mb-2">Prediction</h2>
-        <PredictionWidget
-          eventId={event.id}
-          teams={teams.map((t) => ({
-            id: t.id,
-            name: t.name,
-            color: t.color,
-            emoji: t.emoji,
-          }))}
-          totals={totals}
-          totalCount={totalCount}
-          myPick={myPick}
-          locked={event.status === "COMPLETED"}
-          winnerTeamId={event.winnerTeamId}
-          loggedIn={Boolean(userId)}
-        />
-      </section>
+      {isCompleted && <HindsightSection event={event} teamById={teamById} />}
 
       <section>
-        <h2 className="text-lg font-semibold mb-2">Trash Talk</h2>
+        <div className="section-kicker">// Chatter</div>
+        <h2 className="text-lg font-bold text-ink tracking-tight mb-2">Trash Talk</h2>
         <CommentThread
           eventId={event.id}
           comments={event.comments.map((c) => ({
@@ -209,5 +249,167 @@ export default async function EventDetailPage({
         />
       </section>
     </div>
+  );
+}
+
+type TeamLike = { id: string; name: string; color: string; emoji: string | null };
+
+type HindsightEvent = {
+  winnerTeamId: string | null;
+  predictions: {
+    userId: string;
+    pickedTeamId: string | null;
+    user: { id: string; name: string };
+  }[];
+  matchups: {
+    id: string;
+    label: string;
+    winnerTeamId: string | null;
+    predictions: {
+      userId: string;
+      pickedTeamId: string;
+      user: { id: string; name: string };
+    }[];
+  }[];
+};
+
+function HindsightSection({
+  event,
+  teamById,
+}: {
+  event: HindsightEvent;
+  teamById: Map<string, TeamLike>;
+}) {
+  type Row = {
+    userId: string;
+    name: string;
+    eventPick: string | null;
+    matchupPicks: Record<string, string>;
+    correct: number;
+    total: number;
+  };
+
+  const rows = new Map<string, Row>();
+  const ensure = (userId: string, name: string): Row => {
+    let r = rows.get(userId);
+    if (!r) {
+      r = { userId, name, eventPick: null, matchupPicks: {}, correct: 0, total: 0 };
+      rows.set(userId, r);
+    }
+    return r;
+  };
+
+  for (const p of event.predictions) {
+    if (!p.pickedTeamId) continue;
+    const r = ensure(p.userId, p.user.name);
+    r.eventPick = p.pickedTeamId;
+    r.total += 1;
+    if (event.winnerTeamId && p.pickedTeamId === event.winnerTeamId) r.correct += 1;
+  }
+
+  const settledMatchups = event.matchups.filter((m) => m.winnerTeamId);
+  for (const m of settledMatchups) {
+    for (const p of m.predictions) {
+      const r = ensure(p.userId, p.user.name);
+      r.matchupPicks[m.id] = p.pickedTeamId;
+      r.total += 1;
+      if (p.pickedTeamId === m.winnerTeamId) r.correct += 1;
+    }
+  }
+
+  const list = Array.from(rows.values()).sort(
+    (a, b) => b.correct - a.correct || a.name.localeCompare(b.name)
+  );
+
+  if (list.length === 0) {
+    return (
+      <section>
+        <div className="section-kicker">// Hindsight</div>
+        <h2 className="text-lg font-bold text-ink tracking-tight mb-2">Predictions vs Reality</h2>
+        <div className="card p-4 bg-paper text-sm text-ink-soft">
+          Nobody made a pick for this event.
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section>
+      <div className="section-kicker">// Hindsight</div>
+      <h2 className="text-lg font-bold text-ink tracking-tight mb-2">Predictions vs Reality</h2>
+      <div className="card overflow-x-auto bg-paper">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-ink/10">
+              <th className="text-left p-3 kicker">Player</th>
+              <th className="text-left p-3 kicker">Event Pick</th>
+              {settledMatchups.map((m, i) => (
+                <th key={m.id} className="text-left p-3 kicker">
+                  {m.label || `M${i + 1}`}
+                </th>
+              ))}
+              <th className="text-right p-3 kicker">Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            {list.map((r) => (
+              <tr key={r.userId} className="border-b border-ink/5 last:border-0">
+                <td className="p-3 font-semibold text-ink">{r.name}</td>
+                <td className="p-3">
+                  <PickCell
+                    pickId={r.eventPick}
+                    winnerId={event.winnerTeamId}
+                    teamById={teamById}
+                  />
+                </td>
+                {settledMatchups.map((m) => (
+                  <td key={m.id} className="p-3">
+                    <PickCell
+                      pickId={r.matchupPicks[m.id] ?? null}
+                      winnerId={m.winnerTeamId}
+                      teamById={teamById}
+                    />
+                  </td>
+                ))}
+                <td className="p-3 text-right stat-num text-base text-ink">
+                  {r.correct}/{r.total}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+function PickCell({
+  pickId,
+  winnerId,
+  teamById,
+}: {
+  pickId: string | null;
+  winnerId: string | null;
+  teamById: Map<string, TeamLike>;
+}) {
+  if (!pickId) {
+    return <span className="kicker">—</span>;
+  }
+  const team = teamById.get(pickId);
+  const correct = winnerId && pickId === winnerId;
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 ${
+        correct ? "text-ink" : "text-ink-soft line-through decoration-ink/30"
+      }`}
+    >
+      <span
+        className="h-2 w-2 rounded-full"
+        style={{ backgroundColor: team?.color ?? "#999" }}
+        aria-hidden
+      />
+      <span>{team?.name ?? "?"}</span>
+      <span className="text-xs">{correct ? "✓" : "✗"}</span>
+    </span>
   );
 }
