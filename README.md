@@ -1,4 +1,4 @@
-# Burton Valley Dads' Pickleball Challenge
+# Pickle Palms 2026
 
 A weekend-competition web app. Two teams, many events (pickleball being the
 main one), manual scoring, per-event prediction polls, comments, and login.
