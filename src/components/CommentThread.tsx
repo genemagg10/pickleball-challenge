@@ -227,7 +227,7 @@ function EventCompletedCard({ item }: { item: EventCompletedItem }) {
     >
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="badge bg-emerald-100 text-emerald-800 border-emerald-300">
+          <span className="badge bg-cactus-100 text-cactus-800 border-cactus-300">
             <span aria-hidden>🏆</span>
             <span>Event complete</span>
           </span>
