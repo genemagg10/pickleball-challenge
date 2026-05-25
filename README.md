@@ -57,28 +57,39 @@ and signing up again, or by updating it directly in the database.
 
 ## Deploy to Vercel
 
-1. Create a free Postgres database. Easiest options:
-   - [Neon](https://neon.tech) — free tier, no credit card.
-   - [Vercel Postgres](https://vercel.com/storage/postgres).
-   - [Supabase](https://supabase.com) — use the connection string in
-     "Connection Pooling" mode.
-2. Push this repo to GitHub.
-3. In Vercel, "New Project" → import the repo.
-4. Add environment variables:
-   - `DATABASE_URL` — the Postgres connection string. For Neon/Supabase make
-     sure to use the **pooled** URL and include `?sslmode=require`.
+Recommended path: deploy on Vercel and use **Neon Postgres** through Vercel's
+Storage tab. Everything lives under one Vercel project — one dashboard, one
+login, env vars wired up automatically — and both tiers are free.
+
+1. Push this repo to GitHub.
+2. In Vercel, "New Project" → import the repo. Don't deploy yet (or let the
+   first build fail; you'll redeploy after step 3).
+3. In the project's **Storage** tab → **Create Database** → **Neon**
+   (Serverless Postgres). Vercel will create the database and automatically
+   inject `DATABASE_URL` (and a few related vars) into the project's
+   environment variables.
+4. Add the remaining environment variables:
    - `NEXTAUTH_SECRET` — generate one with `openssl rand -base64 32`.
    - `NEXTAUTH_URL` — your deployed URL, e.g. `https://your-app.vercel.app`.
    - `ADMIN_EMAIL` *(optional)* — the email that should be granted admin on
      signup.
-5. Deploy. The first build runs `prisma generate` automatically. You still
-   need to push the schema once:
+5. Redeploy. The build runs `prisma generate` automatically. You still need
+   to push the schema once — grab the `DATABASE_URL` from Vercel's Storage
+   tab and run locally:
    ```bash
    DATABASE_URL="..." npx prisma db push
    DATABASE_URL="..." npm run db:seed   # optional; creates sample data
    ```
-   (Run those locally pointed at the production database, or use a one-off
-   Vercel CLI command.)
+
+### Other free Postgres options
+
+If you'd rather not use Neon, any Postgres provider works — just set
+`DATABASE_URL` yourself:
+
+- [Supabase](https://supabase.com) — free tier; use the **Connection Pooling**
+  string (port 6543). Note: free projects pause after ~1 week of inactivity.
+- [Neon](https://neon.tech) direct (without the Vercel integration) — free
+  tier, no credit card.
 
 ## Routes
 
