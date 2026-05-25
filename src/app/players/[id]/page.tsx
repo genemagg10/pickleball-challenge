@@ -348,11 +348,7 @@ export default async function PlayerProfilePage({
                       <div
                         key={mp.id}
                         className={`card p-3 bg-paper flex items-center justify-between gap-3 ${
-                          won
-                            ? "border-emerald-300 bg-emerald-50/60"
-                            : lost
-                            ? "opacity-70"
-                            : ""
+                          lost ? "opacity-60" : ""
                         }`}
                       >
                         <div className="text-sm min-w-0">
