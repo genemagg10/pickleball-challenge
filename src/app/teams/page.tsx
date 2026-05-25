@@ -104,9 +104,17 @@ export default async function TeamsPage() {
                             <div className="flex items-center justify-between gap-2">
                               <Link
                                 href={`/players/${p.id}`}
-                                className="text-ink font-medium hover:underline underline-offset-2 min-w-0 truncate"
+                                className="text-ink font-medium hover:underline underline-offset-2 min-w-0 truncate flex items-center gap-1"
                               >
-                                {p.name}
+                                {p.isCaptain && (
+                                  <span
+                                    aria-label="Team captain"
+                                    title={`Captain of ${t.name}`}
+                                  >
+                                    🧢
+                                  </span>
+                                )}
+                                <span className="truncate">{p.name}</span>
                               </Link>
                               <span className="flex items-center gap-2 text-xs shrink-0">
                                 {p.user && (

@@ -188,8 +188,17 @@ export default async function PlayerProfilePage({
         <div className="mt-2 flex items-end justify-between gap-3 flex-wrap">
           <div>
             <div className="section-kicker">// Player</div>
-            <h1 className="text-3xl font-bold text-ink tracking-tight">
+            <h1 className="text-3xl font-bold text-ink tracking-tight flex items-center gap-2 flex-wrap">
               {player.name}
+              {player.isCaptain && (
+                <span
+                  className="text-xl"
+                  title={`Captain of ${player.team.name}`}
+                  aria-label="Team captain"
+                >
+                  🧢
+                </span>
+              )}
             </h1>
             <div className="mt-1 flex items-center gap-2 text-sm">
               <span
@@ -200,6 +209,9 @@ export default async function PlayerProfilePage({
               <span className="font-semibold" style={{ color: player.team.color }}>
                 {player.team.emoji} {player.team.name}
               </span>
+              {player.isCaptain && (
+                <span className="kicker">· 🧢 CAPTAIN</span>
+              )}
               {player.user && (
                 <span className="kicker">· @{player.user.name}</span>
               )}
@@ -249,7 +261,11 @@ export default async function PlayerProfilePage({
         </div>
       </section>
 
-      <section className="grid md:grid-cols-2 gap-3">
+      <section
+        className={`grid grid-cols-1 sm:grid-cols-2 ${
+          userData ? "lg:grid-cols-4" : ""
+        } gap-3`}
+      >
         <div className="card p-4 bg-paper">
           <div className="kicker mb-2">Matchup record</div>
           <WinLossDonut
@@ -263,48 +279,47 @@ export default async function PlayerProfilePage({
           <div className="kicker mb-2">Points per event</div>
           <PointsByEventBar data={pointsByEvent} teamColor={player.team.color} />
         </div>
-      </section>
-
-      {userData && (
-        <section className="grid md:grid-cols-2 gap-3">
-          <div className="card p-4 bg-paper">
-            <div className="kicker mb-2">Pick accuracy</div>
-            <PickAccuracyDonut correct={pickCorrect} wrong={pickWrong} />
-          </div>
-          <div className="card p-4 bg-paper">
-            <div className="kicker mb-2">Comment activity</div>
-            <div className="flex items-baseline gap-3 mt-2">
-              <div className="stat-num text-4xl text-ink">
-                {userData._count.comments}
-              </div>
-              <div className="kicker">TOTAL COMMENTS</div>
+        {userData && (
+          <>
+            <div className="card p-4 bg-paper">
+              <div className="kicker mb-2">Pick accuracy</div>
+              <PickAccuracyDonut correct={pickCorrect} wrong={pickWrong} />
             </div>
-            <div className="mt-4 space-y-1 max-h-32 overflow-y-auto">
-              {userData.comments.slice(0, 5).map((c) => (
-                <div key={c.id} className="text-xs text-ink-soft truncate">
-                  <span className="kicker mr-1">
-                    {new Date(c.createdAt).toLocaleDateString()}
-                  </span>
-                  {c.event ? (
-                    <Link
-                      href={`/events/${c.event.id}`}
-                      className="hover:text-ink"
-                    >
-                      [{c.event.name}]
-                    </Link>
-                  ) : (
-                    <span>[lounge]</span>
-                  )}{" "}
-                  <span className="text-ink">{c.body}</span>
+            <div className="card p-4 bg-paper">
+              <div className="kicker mb-2">Comment activity</div>
+              <div className="flex items-baseline gap-3 mt-2">
+                <div className="stat-num text-4xl text-ink">
+                  {userData._count.comments}
                 </div>
-              ))}
-              {userData.comments.length === 0 && (
-                <div className="text-sm text-ink-soft">No comments yet.</div>
-              )}
+                <div className="kicker">TOTAL COMMENTS</div>
+              </div>
+              <div className="mt-4 space-y-1 max-h-32 overflow-y-auto">
+                {userData.comments.slice(0, 5).map((c) => (
+                  <div key={c.id} className="text-xs text-ink-soft truncate">
+                    <span className="kicker mr-1">
+                      {new Date(c.createdAt).toLocaleDateString()}
+                    </span>
+                    {c.event ? (
+                      <Link
+                        href={`/events/${c.event.id}`}
+                        className="hover:text-ink"
+                      >
+                        [{c.event.name}]
+                      </Link>
+                    ) : (
+                      <span>[lounge]</span>
+                    )}{" "}
+                    <span className="text-ink">{c.body}</span>
+                  </div>
+                ))}
+                {userData.comments.length === 0 && (
+                  <div className="text-sm text-ink-soft">No comments yet.</div>
+                )}
+              </div>
             </div>
-          </div>
-        </section>
-      )}
+          </>
+        )}
+      </section>
 
       <section>
         <div className="section-kicker">// Matchups</div>

@@ -54,6 +54,7 @@ model Player {
   team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
   userId    String?  @unique
   user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  isCaptain Boolean  @default(false)
   createdAt DateTime @default(now())
 
   matchupParticipations MatchupParticipant[]
@@ -76,6 +77,7 @@ model Event {
   status      EventStatus @default(UPCOMING)
   sortOrder   Int         @default(0)
   createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt @default(now())
 
   winnerTeamId String?
   winnerTeam   Team?   @relation("EventWinner", fields: [winnerTeamId], references: [id], onDelete: SetNull)
@@ -95,6 +97,7 @@ model Matchup {
   label     String   @default("")
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
 
   teamAId String
   teamA   Team   @relation("MatchupTeamA", fields: [teamAId], references: [id], onDelete: Cascade)
