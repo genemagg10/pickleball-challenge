@@ -10,8 +10,8 @@ type TeamLite = { id: string; name: string; color: string; emoji: string | null 
 
 const statusStyles: Record<string, string> = {
   UPCOMING: "bg-paper-dark text-ink-soft border-ink/15",
-  IN_PROGRESS: "bg-amber-100 text-amber-800 border-amber-300",
-  COMPLETED: "bg-emerald-100 text-emerald-800 border-emerald-300",
+  IN_PROGRESS: "bg-sun-100 text-sun-800 border-sun-300",
+  COMPLETED: "bg-cactus-100 text-cactus-800 border-cactus-300",
 };
 
 export function EventCard({

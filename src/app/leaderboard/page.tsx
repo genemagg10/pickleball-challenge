@@ -368,12 +368,12 @@ function PickRow({
           {pickedTeam.name}
         </span>
         {correct && (
-          <span className="badge bg-emerald-100 text-emerald-800 border-emerald-300">
+          <span className="badge bg-cactus-100 text-cactus-800 border-cactus-300">
             ✓
           </span>
         )}
         {wrong && (
-          <span className="badge bg-red-100 text-red-800 border-red-300">
+          <span className="badge bg-clay-100 text-clay-800 border-clay-300">
             ✗ {winnerTeam?.name}
           </span>
         )}

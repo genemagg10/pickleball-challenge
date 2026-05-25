@@ -94,7 +94,7 @@ export function PredictionWidget({
                     {t.emoji} {t.name}
                   </span>
                   {isWinner && (
-                    <span className="badge bg-emerald-100 text-emerald-800 border-emerald-300">
+                    <span className="badge bg-cactus-100 text-cactus-800 border-cactus-300">
                       Won
                     </span>
                   )}

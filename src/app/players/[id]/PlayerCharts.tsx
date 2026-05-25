@@ -14,9 +14,10 @@ import {
 
 const ink = "#0f0f0f";
 const inkSoft = "#525252";
-const positive = "#16a34a";
-const negative = "#dc2626";
-const neutral = "#a3a3a3";
+const positive = "#3d7a5f"; // cactus
+const negative = "#c4682c"; // sun (terracotta)
+const clay = "#7d5e5f"; // clay
+const neutral = "#9fb8a8"; // sage
 
 export function WinLossDonut({
   wins,
@@ -159,7 +160,7 @@ export function PickAccuracyDonut({
   }
   const data = [
     { name: "Correct", value: correct, color: positive },
-    { name: "Wrong", value: wrong, color: negative },
+    { name: "Wrong", value: wrong, color: clay },
   ];
   return (
     <div className="relative h-48">
