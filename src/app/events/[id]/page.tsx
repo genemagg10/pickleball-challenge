@@ -43,6 +43,7 @@ export default async function EventDetailPage({
                 rootingForPlayer: {
                   select: { id: true, name: true, teamId: true },
                 },
+                player: { select: { id: true, name: true } },
               },
             },
           },
@@ -167,14 +168,8 @@ export default async function EventDetailPage({
           <h2 className="text-lg font-bold text-ink tracking-tight mb-2">Head-to-Head</h2>
           <div className="space-y-3">
             {event.matchups.map((m) => {
-              const sideA = m.participants
-                .filter((p) => p.side === "A")
-                .map((p) => p.player.name)
-                .join(" & ");
-              const sideB = m.participants
-                .filter((p) => p.side === "B")
-                .map((p) => p.player.name)
-                .join(" & ");
+              const sidePlayersA = m.participants.filter((p) => p.side === "A").map((p) => p.player);
+              const sidePlayersB = m.participants.filter((p) => p.side === "B").map((p) => p.player);
               const matchupTeams = [m.teamA, m.teamB];
               const matchupTotals: Record<string, number> = {
                 [m.teamAId]: 0,
@@ -188,31 +183,75 @@ export default async function EventDetailPage({
                 ? m.predictions.find((p) => p.userId === userId)?.pickedTeamId ?? null
                 : null;
               const matchupLocked = Boolean(m.winnerTeamId) || isCompleted;
+              const aWon = m.winnerTeamId === m.teamAId;
+              const bWon = m.winnerTeamId === m.teamBId;
 
               return (
                 <div key={m.id} className="card p-3 bg-paper space-y-3">
                   {m.label && <div className="kicker">{m.label}</div>}
-                  <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-sm">
+                  <div className="grid grid-cols-[1fr_auto_1fr] items-stretch gap-2 text-sm">
                     <div
-                      className="font-medium"
-                      style={{
-                        color: m.winnerTeamId === m.teamAId ? m.teamA.color : undefined,
-                      }}
+                      className={`rounded-md p-2 border transition ${
+                        aWon
+                          ? "bg-emerald-50 border-emerald-300"
+                          : bWon
+                          ? "border-transparent opacity-60"
+                          : "border-transparent"
+                      }`}
                     >
-                      <div className="text-ink">{m.teamA.emoji} {sideA || "—"}</div>
-                      <div className="kicker mt-0.5">{m.teamA.name}</div>
+                      <div className="text-ink font-medium">
+                        {m.teamA.emoji}{" "}
+                        {sidePlayersA.length === 0
+                          ? "—"
+                          : sidePlayersA.map((p, i) => (
+                              <span key={p.id}>
+                                {i > 0 && " & "}
+                                <Link
+                                  href={`/players/${p.id}`}
+                                  className="hover:underline underline-offset-2"
+                                >
+                                  {p.name}
+                                </Link>
+                              </span>
+                            ))}
+                      </div>
+                      <div className="kicker mt-0.5" style={{ color: m.teamA.color }}>
+                        {m.teamA.name}
+                        {aWon && <span className="ml-1 text-emerald-700">✓ WIN</span>}
+                      </div>
                     </div>
-                    <div className="text-center stat-num text-xl text-ink">
+                    <div className="text-center stat-num text-xl text-ink self-center">
                       {m.scoreA ?? "–"} : {m.scoreB ?? "–"}
                     </div>
                     <div
-                      className="text-right font-medium"
-                      style={{
-                        color: m.winnerTeamId === m.teamBId ? m.teamB.color : undefined,
-                      }}
+                      className={`rounded-md p-2 border text-right transition ${
+                        bWon
+                          ? "bg-emerald-50 border-emerald-300"
+                          : aWon
+                          ? "border-transparent opacity-60"
+                          : "border-transparent"
+                      }`}
                     >
-                      <div className="text-ink">{m.teamB.emoji} {sideB || "—"}</div>
-                      <div className="kicker mt-0.5">{m.teamB.name}</div>
+                      <div className="text-ink font-medium">
+                        {m.teamB.emoji}{" "}
+                        {sidePlayersB.length === 0
+                          ? "—"
+                          : sidePlayersB.map((p, i) => (
+                              <span key={p.id}>
+                                {i > 0 && " & "}
+                                <Link
+                                  href={`/players/${p.id}`}
+                                  className="hover:underline underline-offset-2"
+                                >
+                                  {p.name}
+                                </Link>
+                              </span>
+                            ))}
+                      </div>
+                      <div className="kicker mt-0.5" style={{ color: m.teamB.color }}>
+                        {m.teamB.name}
+                        {bWon && <span className="ml-1 text-emerald-700">✓ WIN</span>}
+                      </div>
                     </div>
                   </div>
                   <PredictionWidget

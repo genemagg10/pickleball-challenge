@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FanBadge } from "@/components/FanBadge";
@@ -16,6 +17,7 @@ type Comment = {
     name: string;
     rootingForTeam: TeamLite | null;
     rootingForPlayer: PlayerLite | null;
+    player?: { id: string; name: string } | null;
   };
 };
 
@@ -62,27 +64,36 @@ export function CommentThread({ eventId, comments, loggedIn, currentUserId }: Pr
     <div className="space-y-3">
       <div className="space-y-2">
         {comments.length === 0 ? (
-          <p className="text-sm text-slate-500">No comments yet — start the trash talk.</p>
+          <p className="text-sm text-ink-soft">No comments yet — start the trash talk.</p>
         ) : (
           comments.map((c) => (
             <div
               key={c.id}
-              className="rounded-lg border border-slate-200 bg-white p-3 text-sm"
+              className="rounded-lg border border-ink/10 bg-paper p-3 text-sm"
             >
               <div className="flex items-center justify-between gap-2 flex-wrap">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-semibold text-slate-800">{c.user.name}</span>
+                  {c.user.player ? (
+                    <Link
+                      href={`/players/${c.user.player.id}`}
+                      className="font-semibold text-ink hover:underline underline-offset-2"
+                    >
+                      {c.user.name}
+                    </Link>
+                  ) : (
+                    <span className="font-semibold text-ink">{c.user.name}</span>
+                  )}
                   <FanBadge
                     team={c.user.rootingForTeam}
                     player={c.user.rootingForPlayer}
                     size="xs"
                   />
                 </div>
-                <span className="text-xs text-slate-500">
+                <span className="kicker">
                   {new Date(c.createdAt).toLocaleString()}
                 </span>
               </div>
-              <p className="mt-1 text-slate-700 whitespace-pre-wrap">{c.body}</p>
+              <p className="mt-1 text-ink whitespace-pre-wrap">{c.body}</p>
               {currentUserId === c.user.id && (
                 <div className="mt-1 text-right">
                   <button
@@ -99,7 +110,7 @@ export function CommentThread({ eventId, comments, loggedIn, currentUserId }: Pr
       </div>
 
       {loggedIn ? (
-        <form onSubmit={onSubmit} className="card p-3 space-y-2">
+        <form onSubmit={onSubmit} className="card p-3 space-y-2 bg-paper">
           <textarea
             className="input min-h-20"
             placeholder="Bring the heat…"
@@ -116,8 +127,8 @@ export function CommentThread({ eventId, comments, loggedIn, currentUserId }: Pr
           </div>
         </form>
       ) : (
-        <p className="text-sm text-slate-500">
-          <a href="/login" className="text-court underline">
+        <p className="text-sm text-ink-soft">
+          <a href="/login" className="text-ink underline underline-offset-2">
             Sign in
           </a>{" "}
           to join the chat.
