@@ -43,7 +43,7 @@ export default async function EventDetailPage({
                 rootingForPlayer: {
                   select: { id: true, name: true, teamId: true },
                 },
-                player: { select: { id: true, name: true } },
+                player: { select: { id: true, name: true, isCaptain: true } },
               },
             },
           },
@@ -206,6 +206,9 @@ export default async function EventDetailPage({
                                   href={`/players/${p.id}`}
                                   className="hover:underline underline-offset-2"
                                 >
+                                  {p.isCaptain && (
+                                    <span aria-label="captain" title="Captain">🧢 </span>
+                                  )}
                                   {p.name}
                                 </Link>
                               </span>
@@ -234,6 +237,9 @@ export default async function EventDetailPage({
                                   href={`/players/${p.id}`}
                                   className="hover:underline underline-offset-2"
                                 >
+                                  {p.isCaptain && (
+                                    <span aria-label="captain" title="Captain">🧢 </span>
+                                  )}
                                   {p.name}
                                 </Link>
                               </span>
@@ -275,7 +281,8 @@ export default async function EventDetailPage({
         <h2 className="text-lg font-bold text-ink tracking-tight mb-2">Trash Talk</h2>
         <CommentThread
           eventId={event.id}
-          comments={event.comments.map((c) => ({
+          items={event.comments.map((c) => ({
+            type: "comment" as const,
             id: c.id,
             body: c.body,
             createdAt: c.createdAt.toISOString(),

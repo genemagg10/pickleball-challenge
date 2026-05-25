@@ -9,6 +9,7 @@ type Player = {
   id: string;
   name: string;
   teamId: string;
+  isCaptain: boolean;
   team: { name: string };
   user: { id: string; name: string; email: string } | null;
 };
@@ -49,7 +50,10 @@ export function PlayerAdmin({
     router.refresh();
   }
 
-  async function update(id: string, patch: Partial<{ teamId: string; userId: string | null; name: string }>) {
+  async function update(
+    id: string,
+    patch: Partial<{ teamId: string; userId: string | null; name: string; isCaptain: boolean }>
+  ) {
     await fetch(`/api/players/${id}`, {
       method: "PATCH",
       headers: { "content-type": "application/json" },
@@ -65,7 +69,10 @@ export function PlayerAdmin({
           <p className="text-sm text-slate-500">No players yet.</p>
         ) : (
           players.map((p) => (
-            <div key={p.id} className="grid grid-cols-1 sm:grid-cols-4 gap-2 items-center">
+            <div
+              key={p.id}
+              className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto_auto] gap-2 items-center"
+            >
               <input
                 className="input"
                 defaultValue={p.name}
@@ -94,6 +101,18 @@ export function PlayerAdmin({
                   </option>
                 ))}
               </select>
+              <label
+                className="flex items-center gap-1.5 text-sm whitespace-nowrap select-none"
+                title="Team captain"
+              >
+                <input
+                  type="checkbox"
+                  defaultChecked={p.isCaptain}
+                  onChange={(e) => update(p.id, { isCaptain: e.target.checked })}
+                />
+                <span aria-hidden>🧢</span>
+                <span>Captain</span>
+              </label>
               <button onClick={() => remove(p.id)} className="btn-danger">
                 Delete
               </button>

@@ -7,6 +7,7 @@ const patchSchema = z.object({
   name: z.string().min(1).max(60).optional(),
   teamId: z.string().min(1).optional(),
   userId: z.string().nullable().optional(),
+  isCaptain: z.boolean().optional(),
 });
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {

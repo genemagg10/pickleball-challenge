@@ -7,6 +7,7 @@ const schema = z.object({
   name: z.string().min(1).max(60),
   teamId: z.string().min(1),
   userId: z.string().nullable().optional(),
+  isCaptain: z.boolean().optional(),
 });
 
 export async function POST(req: Request) {
@@ -24,6 +25,7 @@ export async function POST(req: Request) {
         name: parsed.data.name.trim(),
         teamId: parsed.data.teamId,
         userId: parsed.data.userId ?? null,
+        isCaptain: parsed.data.isCaptain ?? false,
       },
     });
     return NextResponse.json(player);

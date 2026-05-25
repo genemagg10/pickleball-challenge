@@ -10,19 +10,23 @@ export function Scoreboard({ standings }: { standings: TeamStanding[] }) {
   }
   const [a, b] = standings;
   const leader = a.points === b.points ? null : a.points > b.points ? a : b;
+  const diff = Math.abs(a.points - b.points);
   const total = a.points + b.points;
   const aPct = total === 0 ? 50 : Math.round((a.points / total) * 100);
   return (
     <div className="card overflow-hidden bg-paper">
       <div className="grid grid-cols-[1fr_auto_1fr] items-stretch">
         <TeamCell t={a} leading={leader?.teamId === a.teamId} />
-        <div className="flex flex-col items-center justify-center px-4 py-4 min-w-[110px] border-x border-ink/10">
+        <div className="flex flex-col items-center justify-center px-3 py-4 min-w-[96px] border-x border-ink/10">
           <div className="kicker">Status</div>
-          <div className="mt-1 font-mono text-sm font-semibold text-ink">
-            {leader ? `${leader.name.toUpperCase()} LEAD` : "TIED"}
+          <div className="mt-1 text-2xl" aria-hidden>
+            {leader ? "🔥" : "⚖️"}
+          </div>
+          <div className="mt-0.5 font-mono text-[11px] font-semibold uppercase tracking-wider text-ink">
+            {leader ? `+${diff} LEAD` : "TIED"}
           </div>
         </div>
-        <TeamCell t={b} leading={leader?.teamId === b.teamId} align="right" />
+        <TeamCell t={b} leading={leader?.teamId === b.teamId} />
       </div>
       <div className="h-1.5 flex">
         <div style={{ width: `${aPct}%`, backgroundColor: a.color }} />
@@ -32,27 +36,24 @@ export function Scoreboard({ standings }: { standings: TeamStanding[] }) {
   );
 }
 
-function TeamCell({
-  t,
-  leading,
-  align = "left",
-}: {
-  t: TeamStanding;
-  leading: boolean;
-  align?: "left" | "right";
-}) {
+function TeamCell({ t, leading }: { t: TeamStanding; leading: boolean }) {
   return (
-    <div className={`p-4 ${align === "right" ? "text-right" : ""}`}>
-      <div className={`kicker flex items-center gap-1.5 ${align === "right" ? "justify-end" : ""}`}>
+    <div className="p-4 text-center flex flex-col items-center justify-between gap-1">
+      <div className="kicker flex items-center justify-center gap-1.5 flex-wrap">
         <span aria-hidden>{t.emoji ?? "■"}</span>
         <span>{t.name}</span>
-        {leading && <span className="text-[10px] text-ink">▲ LEAD</span>}
       </div>
-      <div className="stat-num text-5xl mt-1" style={{ color: t.color }}>
+      <div
+        className="stat-num text-5xl mt-1 leading-none tabular-nums"
+        style={{ color: t.color }}
+      >
         {t.points}
       </div>
-      <div className="kicker mt-1">
-        {t.matchupsWon} MATCHUP{t.matchupsWon === 1 ? "" : "S"} WON
+      <div className="kicker mt-1 flex items-center justify-center gap-1">
+        {leading && <span aria-hidden>👑</span>}
+        <span>
+          {t.matchupsWon} MATCHUP{t.matchupsWon === 1 ? "" : "S"} WON
+        </span>
       </div>
     </div>
   );
