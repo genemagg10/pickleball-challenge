@@ -30,7 +30,7 @@ export function EventCard({ event }: { event: EventWithWinner }) {
         <p className="text-sm text-ink-soft mt-2 line-clamp-2">{event.description}</p>
       )}
       <div className="flex items-center justify-between mt-3">
-        <span className="kicker">{event.pointsValue} PTS</span>
+        <span className="kicker">{event.pointsValue} PTS / MATCHUP</span>
         {event.winnerTeam ? (
           <span
             className="font-semibold text-sm"

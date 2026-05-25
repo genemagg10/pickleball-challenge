@@ -52,7 +52,7 @@ function TeamCell({
         {t.points}
       </div>
       <div className="kicker mt-1">
-        {t.eventsWon} EVENT{t.eventsWon === 1 ? "" : "S"} WON
+        {t.matchupsWon} MATCHUP{t.matchupsWon === 1 ? "" : "S"} WON
       </div>
     </div>
   );
