@@ -176,7 +176,7 @@ function CommentCard({
               className="font-semibold text-ink hover:underline underline-offset-2 flex items-center gap-1"
             >
               {item.user.player.isCaptain && (
-                <span aria-label="captain" title="Team captain">🧢</span>
+                <span aria-label="captain" title="Team captain">👑</span>
               )}
               <span>{item.user.name}</span>
             </Link>

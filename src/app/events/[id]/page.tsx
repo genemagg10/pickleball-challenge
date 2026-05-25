@@ -207,7 +207,7 @@ export default async function EventDetailPage({
                                   className="hover:underline underline-offset-2"
                                 >
                                   {p.isCaptain && (
-                                    <span aria-label="captain" title="Captain">🧢 </span>
+                                    <span aria-label="captain" title="Captain">👑 </span>
                                   )}
                                   {p.name}
                                 </Link>
@@ -238,7 +238,7 @@ export default async function EventDetailPage({
                                   className="hover:underline underline-offset-2"
                                 >
                                   {p.isCaptain && (
-                                    <span aria-label="captain" title="Captain">🧢 </span>
+                                    <span aria-label="captain" title="Captain">👑 </span>
                                   )}
                                   {p.name}
                                 </Link>
