@@ -59,7 +59,7 @@ export default async function AdminPage() {
               <tr>
                 <th className="p-3">Name</th>
                 <th className="p-3">Status</th>
-                <th className="p-3">Points</th>
+                <th className="p-3">Pts / matchup</th>
                 <th className="p-3">Winner</th>
                 <th className="p-3"></th>
               </tr>

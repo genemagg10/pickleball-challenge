@@ -94,7 +94,7 @@ export default async function EventDetailPage({
             <div className="badge bg-paper-dark text-ink-soft mb-1">
               {event.status.replace("_", " ").toLowerCase()}
             </div>
-            <div className="kicker">{event.pointsValue} PTS</div>
+            <div className="kicker">{event.pointsValue} PTS / MATCHUP</div>
             {session?.user?.isAdmin && (
               <Link
                 href={`/admin/events/${event.id}`}
@@ -128,6 +128,14 @@ export default async function EventDetailPage({
               <p className="mt-1 text-ink-soft">{event.resultNotes}</p>
             )}
           </div>
+        )}
+
+        {event.matchups.length > 0 && (
+          <EventScoreBar
+            teams={teams}
+            matchups={event.matchups}
+            pointsValue={event.pointsValue}
+          />
         )}
       </div>
 
@@ -253,6 +261,65 @@ export default async function EventDetailPage({
 }
 
 type TeamLike = { id: string; name: string; color: string; emoji: string | null };
+
+function EventScoreBar({
+  teams,
+  matchups,
+  pointsValue,
+}: {
+  teams: TeamLike[];
+  matchups: { winnerTeamId: string | null }[];
+  pointsValue: number;
+}) {
+  const totalSettled = matchups.filter((m) => m.winnerTeamId).length;
+  const totalMatchups = matchups.length;
+  const wins: Record<string, number> = {};
+  for (const t of teams) wins[t.id] = 0;
+  for (const m of matchups) {
+    if (m.winnerTeamId && wins[m.winnerTeamId] != null) {
+      wins[m.winnerTeamId] += 1;
+    }
+  }
+  const totalAwarded = totalSettled * pointsValue;
+
+  return (
+    <div className="mt-3 card p-3 bg-paper">
+      <div className="flex items-baseline justify-between mb-2">
+        <div className="kicker">Points from this event</div>
+        <div className="kicker">
+          {totalSettled}/{totalMatchups} MATCHUPS SETTLED · {totalAwarded} PTS AWARDED
+        </div>
+      </div>
+      <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${teams.length}, minmax(0,1fr))` }}>
+        {teams.map((t) => {
+          const w = wins[t.id] ?? 0;
+          const pts = w * pointsValue;
+          return (
+            <div
+              key={t.id}
+              className="rounded-md border border-ink/10 p-2 flex items-center justify-between gap-2"
+            >
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span
+                  className="h-2.5 w-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: t.color }}
+                  aria-hidden
+                />
+                <span className="font-semibold text-ink truncate">
+                  {t.emoji} {t.name}
+                </span>
+              </div>
+              <div className="flex items-baseline gap-1.5 shrink-0">
+                <span className="stat-num text-xl text-ink">{pts}</span>
+                <span className="kicker">{w} WIN{w === 1 ? "" : "S"}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 type HindsightEvent = {
   winnerTeamId: string | null;

@@ -6,27 +6,59 @@ export type TeamStanding = {
   color: string;
   emoji: string | null;
   points: number;
-  eventsWon: number;
+  matchupsWon: number;
 };
 
 export async function getStandings(): Promise<TeamStanding[]> {
-  const teams = await prisma.team.findMany({ orderBy: { createdAt: "asc" } });
-  const completed = await prisma.event.findMany({
-    where: { status: "COMPLETED", winnerTeamId: { not: null } },
-    select: { winnerTeamId: true, pointsValue: true },
-  });
+  const [teams, settledMatchups] = await Promise.all([
+    prisma.team.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.matchup.findMany({
+      where: { winnerTeamId: { not: null } },
+      select: {
+        winnerTeamId: true,
+        event: { select: { pointsValue: true } },
+      },
+    }),
+  ]);
 
   return teams.map((t) => {
-    const wins = completed.filter((e) => e.winnerTeamId === t.id);
+    const wins = settledMatchups.filter((m) => m.winnerTeamId === t.id);
     return {
       teamId: t.id,
       name: t.name,
       color: t.color,
       emoji: t.emoji,
-      points: wins.reduce((s, e) => s + e.pointsValue, 0),
-      eventsWon: wins.length,
+      points: wins.reduce((s, m) => s + m.event.pointsValue, 0),
+      matchupsWon: wins.length,
     };
   });
+}
+
+export type EventScore = {
+  teamAPoints: number;
+  teamBPoints: number;
+  teamAMatchupsWon: number;
+  teamBMatchupsWon: number;
+};
+
+export function getEventScore(
+  matchups: { winnerTeamId: string | null }[],
+  pointsValue: number,
+  teamAId: string,
+  teamBId: string
+): EventScore {
+  let aWins = 0;
+  let bWins = 0;
+  for (const m of matchups) {
+    if (m.winnerTeamId === teamAId) aWins += 1;
+    else if (m.winnerTeamId === teamBId) bWins += 1;
+  }
+  return {
+    teamAPoints: aWins * pointsValue,
+    teamBPoints: bWins * pointsValue,
+    teamAMatchupsWon: aWins,
+    teamBMatchupsWon: bWins,
+  };
 }
 
 export type PredictionLeader = {

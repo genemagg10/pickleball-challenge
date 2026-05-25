@@ -113,7 +113,7 @@ export function EventEditor({ event, teams }: { event: Event; teams: Team[] }) {
           />
         </div>
         <div>
-          <label className="label">Points value</label>
+          <label className="label">Points per matchup</label>
           <input
             type="number"
             min={1}
