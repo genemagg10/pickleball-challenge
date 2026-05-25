@@ -39,6 +39,9 @@ export default async function LeaderboardPage() {
           <h1 className="text-2xl font-bold text-ink tracking-tight">Overall Championship</h1>
         </div>
         <PredictionWidget
+          endpoint="/api/predict/overall"
+          kicker="Champion Pick"
+          title="Who wins the whole thing?"
           teams={teams.map((t) => ({
             id: t.id,
             name: t.name,

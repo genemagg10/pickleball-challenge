@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 type Team = { id: string; name: string; color: string; emoji: string | null };
 
 type Props = {
-  eventId?: string; // omit for overall championship picks
+  endpoint: string; // POST URL that accepts { teamId }
   teams: Team[];
   totals: Record<string, number>;
   totalCount: number;
@@ -14,10 +14,13 @@ type Props = {
   locked: boolean;
   winnerTeamId?: string | null;
   loggedIn: boolean;
+  title?: string;
+  kicker?: string;
+  compact?: boolean;
 };
 
 export function PredictionWidget({
-  eventId,
+  endpoint,
   teams,
   totals,
   totalCount,
@@ -25,6 +28,9 @@ export function PredictionWidget({
   locked,
   winnerTeamId,
   loggedIn,
+  title,
+  kicker = "Prediction Market",
+  compact = false,
 }: Props) {
   const router = useRouter();
   const [pending, setPending] = useState<string | null>(null);
@@ -32,9 +38,6 @@ export function PredictionWidget({
   async function pick(teamId: string) {
     if (locked || !loggedIn) return;
     setPending(teamId);
-    const endpoint = eventId
-      ? `/api/events/${eventId}/predict`
-      : `/api/predict/overall`;
     const res = await fetch(endpoint, {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -47,13 +50,13 @@ export function PredictionWidget({
   }
 
   return (
-    <div className="card p-4 bg-paper">
-      <div className="flex items-baseline justify-between mb-3">
+    <div className={`card bg-paper ${compact ? "p-3" : "p-4"}`}>
+      <div className={`flex items-baseline justify-between ${compact ? "mb-2" : "mb-3"}`}>
         <div>
-          <div className="kicker">Prediction Market</div>
-          <h3 className="font-semibold text-ink mt-0.5">
-            {eventId ? "Who wins this event?" : "Who wins the whole thing?"}
-          </h3>
+          <div className="kicker">{kicker}</div>
+          {title && (
+            <h3 className="font-semibold text-ink mt-0.5 text-sm">{title}</h3>
+          )}
         </div>
         <span className="kicker">
           {totalCount} PICK{totalCount === 1 ? "" : "S"}
@@ -64,6 +67,7 @@ export function PredictionWidget({
           const count = totals[t.id] || 0;
           const pct = totalCount === 0 ? 0 : Math.round((count / totalCount) * 100);
           const isWinner = winnerTeamId === t.id;
+          const isLoser = winnerTeamId != null && winnerTeamId !== t.id;
           const isMine = myPick === t.id;
           const isPending = pending === t.id;
           return (
@@ -75,7 +79,9 @@ export function PredictionWidget({
                 isMine
                   ? "border-ink bg-paper-dark/60"
                   : "border-ink/10 bg-paper hover:border-ink/40"
-              } ${locked || !loggedIn ? "opacity-90 cursor-not-allowed" : ""}`}
+              } ${locked || !loggedIn ? "opacity-90 cursor-not-allowed" : ""} ${
+                isLoser ? "opacity-60" : ""
+              }`}
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 min-w-0">
@@ -95,9 +101,10 @@ export function PredictionWidget({
                   {isMine && !isWinner && (
                     <span className="badge bg-ink text-paper border-ink">Your pick</span>
                   )}
-                  {isPending && (
-                    <span className="kicker">…saving</span>
+                  {isMine && isWinner && (
+                    <span className="badge bg-ink text-paper border-ink">You called it</span>
                   )}
+                  {isPending && <span className="kicker">…saving</span>}
                 </div>
                 <div className="flex items-baseline gap-1.5 shrink-0">
                   <span className="stat-num text-2xl text-ink">{pct}%</span>
@@ -114,15 +121,21 @@ export function PredictionWidget({
           );
         })}
       </div>
-      <div className="mt-3 kicker">
+      <div className={`${compact ? "mt-2" : "mt-3"} kicker`}>
         {!loggedIn ? (
           <a href="/login" className="text-ink underline underline-offset-2">
             Sign in to make a pick
           </a>
         ) : locked ? (
-          "Picks locked — event is final."
+          winnerTeamId
+            ? myPick
+              ? myPick === winnerTeamId
+                ? "Nailed it."
+                : "Not this time."
+              : "Picks locked — final."
+            : "Picks locked — final."
         ) : myPick ? (
-          "Your pick is saved. Tap another to change it."
+          "Pick saved. Tap another to change."
         ) : (
           "Tap a team to lock in your pick."
         )}
