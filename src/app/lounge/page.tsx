@@ -17,6 +17,7 @@ export default async function LoungePage() {
           name: true,
           rootingForTeam: true,
           rootingForPlayer: { select: { id: true, name: true, teamId: true } },
+          player: { select: { id: true, name: true } },
         },
       },
     },

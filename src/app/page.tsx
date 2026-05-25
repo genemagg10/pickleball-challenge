@@ -23,9 +23,11 @@ export default async function HomePage() {
       include: {
         user: {
           select: {
+            id: true,
             name: true,
             rootingForTeam: true,
             rootingForPlayer: { select: { id: true, name: true, teamId: true } },
+            player: { select: { id: true, name: true } },
           },
         },
       },
@@ -94,7 +96,16 @@ export default async function HomePage() {
           ) : (
             recentComments.map((c) => (
               <div key={c.id} className="text-sm">
-                <span className="font-semibold text-ink">{c.user.name}</span>{" "}
+                {c.user.player ? (
+                  <Link
+                    href={`/players/${c.user.player.id}`}
+                    className="font-semibold text-ink hover:underline underline-offset-2"
+                  >
+                    {c.user.name}
+                  </Link>
+                ) : (
+                  <span className="font-semibold text-ink">{c.user.name}</span>
+                )}{" "}
                 <FanBadge
                   team={c.user.rootingForTeam}
                   player={c.user.rootingForPlayer}
