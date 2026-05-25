@@ -70,25 +70,16 @@ export type PredictionLeader = {
 };
 
 export async function getPredictionLeaderboard(): Promise<PredictionLeader[]> {
-  const [completedEvents, settledMatchups, eventPredictions, matchupPredictions] =
-    await Promise.all([
-      prisma.event.findMany({
-        where: { status: "COMPLETED", winnerTeamId: { not: null } },
-        select: { id: true, winnerTeamId: true },
-      }),
-      prisma.matchup.findMany({
-        where: { winnerTeamId: { not: null } },
-        select: { id: true, winnerTeamId: true },
-      }),
-      prisma.prediction.findMany({
-        include: { user: { select: { id: true, name: true } } },
-      }),
-      prisma.matchupPrediction.findMany({
-        include: { user: { select: { id: true, name: true } } },
-      }),
-    ]);
+  const [settledMatchups, matchupPredictions] = await Promise.all([
+    prisma.matchup.findMany({
+      where: { winnerTeamId: { not: null } },
+      select: { id: true, winnerTeamId: true },
+    }),
+    prisma.matchupPrediction.findMany({
+      include: { user: { select: { id: true, name: true } } },
+    }),
+  ]);
 
-  const winnerByEvent = new Map(completedEvents.map((e) => [e.id, e.winnerTeamId!]));
   const winnerByMatchup = new Map(settledMatchups.map((m) => [m.id, m.winnerTeamId!]));
 
   const byUser = new Map<string, PredictionLeader>();
@@ -100,15 +91,6 @@ export async function getPredictionLeaderboard(): Promise<PredictionLeader[]> {
     }
     return entry;
   };
-
-  for (const p of eventPredictions) {
-    if (!p.pickedTeamId) continue;
-    const winner = winnerByEvent.get(p.eventId);
-    if (!winner) continue;
-    const entry = upsert(p.userId, p.user.name);
-    entry.total += 1;
-    if (p.pickedTeamId === winner) entry.correct += 1;
-  }
 
   for (const p of matchupPredictions) {
     const winner = winnerByMatchup.get(p.matchupId);

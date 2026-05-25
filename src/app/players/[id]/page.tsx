@@ -96,20 +96,6 @@ export default async function PlayerProfilePage({
         where: { id: player.user.id },
         include: {
           championPickTeam: true,
-          predictions: {
-            include: {
-              event: {
-                select: {
-                  id: true,
-                  name: true,
-                  status: true,
-                  winnerTeamId: true,
-                  winnerTeam: true,
-                },
-              },
-              pickedTeam: true,
-            },
-          },
           matchupPredictions: {
             include: {
               matchup: {
@@ -136,16 +122,6 @@ export default async function PlayerProfilePage({
   let pickCorrect = 0;
   let pickWrong = 0;
   if (userData) {
-    for (const p of userData.predictions) {
-      if (
-        !p.pickedTeamId ||
-        p.event.status !== "COMPLETED" ||
-        !p.event.winnerTeamId
-      )
-        continue;
-      if (p.pickedTeamId === p.event.winnerTeamId) pickCorrect += 1;
-      else pickWrong += 1;
-    }
     for (const mp of userData.matchupPredictions) {
       if (!mp.matchup.winnerTeamId) continue;
       if (mp.pickedTeamId === mp.matchup.winnerTeamId) pickCorrect += 1;
@@ -436,7 +412,6 @@ export default async function PlayerProfilePage({
       {userData && (
         <PicksHistorySection
           championPickTeam={userData.championPickTeam}
-          eventPicks={userData.predictions}
           matchupPicks={userData.matchupPredictions}
         />
       )}
@@ -473,21 +448,9 @@ type TeamLite = { id: string; name: string; color: string; emoji: string | null 
 
 function PicksHistorySection({
   championPickTeam,
-  eventPicks,
   matchupPicks,
 }: {
   championPickTeam: TeamLite | null;
-  eventPicks: {
-    id: string;
-    pickedTeam: TeamLite | null;
-    event: {
-      id: string;
-      name: string;
-      status: string;
-      winnerTeamId: string | null;
-      winnerTeam: TeamLite | null;
-    };
-  }[];
   matchupPicks: {
     id: string;
     pickedTeam: TeamLite;
@@ -499,10 +462,7 @@ function PicksHistorySection({
     };
   }[];
 }) {
-  const settledCount =
-    eventPicks.filter(
-      (p) => p.event.status === "COMPLETED" && p.event.winnerTeamId
-    ).length + matchupPicks.filter((m) => m.matchup.winnerTeamId).length;
+  const settledCount = matchupPicks.filter((m) => m.matchup.winnerTeamId).length;
 
   return (
     <section>
@@ -524,26 +484,10 @@ function PicksHistorySection({
             <div className="text-sm text-ink-soft">None.</div>
           )}
         </div>
-        {eventPicks.length === 0 && matchupPicks.length === 0 ? (
-          <div className="text-sm text-ink-soft">
-            No event or matchup picks yet.
-          </div>
+        {matchupPicks.length === 0 ? (
+          <div className="text-sm text-ink-soft">No matchup picks yet.</div>
         ) : (
           <>
-            {eventPicks
-              .filter((p) => p.pickedTeam)
-              .slice(0, 10)
-              .map((p) => (
-                <PickLine
-                  key={p.id}
-                  label={`Event: ${p.event.name}`}
-                  pickedTeam={p.pickedTeam!}
-                  winnerTeam={p.event.winnerTeam}
-                  settled={
-                    p.event.status === "COMPLETED" && p.event.winnerTeamId != null
-                  }
-                />
-              ))}
             {matchupPicks.slice(0, 10).map((mp) => (
               <PickLine
                 key={mp.id}
@@ -555,7 +499,7 @@ function PicksHistorySection({
             ))}
             {settledCount === 0 && (
               <div className="kicker">
-                None settled yet — accuracy will appear after events finish.
+                None settled yet — accuracy will appear after matchups finish.
               </div>
             )}
           </>

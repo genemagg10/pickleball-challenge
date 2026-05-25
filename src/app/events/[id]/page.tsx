@@ -48,9 +48,6 @@ export default async function EventDetailPage({
             },
           },
         },
-        predictions: {
-          include: { user: { select: { id: true, name: true } } },
-        },
       },
     }),
     prisma.team.findMany({ orderBy: { createdAt: "asc" } }),
@@ -60,15 +57,17 @@ export default async function EventDetailPage({
 
   const teamById = new Map(teams.map((t) => [t.id, t]));
 
+  // Event-level outlook: aggregate every matchup pick across this event's matchups.
+  // No standalone event-level prediction exists anymore.
   const eventTotals: Record<string, number> = {};
   for (const t of teams) eventTotals[t.id] = 0;
-  for (const p of event.predictions) {
-    if (p.pickedTeamId) eventTotals[p.pickedTeamId] = (eventTotals[p.pickedTeamId] || 0) + 1;
+  let eventTotalCount = 0;
+  for (const m of event.matchups) {
+    for (const p of m.predictions) {
+      eventTotals[p.pickedTeamId] = (eventTotals[p.pickedTeamId] || 0) + 1;
+      eventTotalCount += 1;
+    }
   }
-  const eventTotalCount = event.predictions.length;
-  const myEventPick = userId
-    ? event.predictions.find((p) => p.userId === userId)?.pickedTeamId ?? null
-    : null;
 
   const isCompleted = event.status === "COMPLETED";
 
@@ -140,27 +139,23 @@ export default async function EventDetailPage({
         )}
       </div>
 
-      <section>
-        <div className="section-kicker">// Market</div>
-        <h2 className="text-lg font-bold text-ink tracking-tight mb-2">Event Prediction</h2>
-        <PredictionWidget
-          endpoint={`/api/events/${event.id}/predict`}
-          kicker="Event Pick"
-          title="Who wins this event?"
-          teams={teams.map((t) => ({
-            id: t.id,
-            name: t.name,
-            color: t.color,
-            emoji: t.emoji,
-          }))}
-          totals={eventTotals}
-          totalCount={eventTotalCount}
-          myPick={myEventPick}
-          locked={isCompleted}
-          winnerTeamId={event.winnerTeamId}
-          loggedIn={Boolean(userId)}
-        />
-      </section>
+      {event.matchups.length > 0 && (
+        <section>
+          <div className="section-kicker">// Crowd</div>
+          <h2 className="text-lg font-bold text-ink tracking-tight mb-2">Event Outlook</h2>
+          <EventOutlook
+            teams={teams.map((t) => ({
+              id: t.id,
+              name: t.name,
+              color: t.color,
+              emoji: t.emoji,
+            }))}
+            totals={eventTotals}
+            totalCount={eventTotalCount}
+            winnerTeamId={event.winnerTeamId}
+          />
+        </section>
+      )}
 
       {event.matchups.length > 0 && (
         <section>
@@ -358,12 +353,6 @@ function EventScoreBar({
 }
 
 type HindsightEvent = {
-  winnerTeamId: string | null;
-  predictions: {
-    userId: string;
-    pickedTeamId: string | null;
-    user: { id: string; name: string };
-  }[];
   matchups: {
     id: string;
     label: string;
@@ -386,7 +375,6 @@ function HindsightSection({
   type Row = {
     userId: string;
     name: string;
-    eventPick: string | null;
     matchupPicks: Record<string, string>;
     correct: number;
     total: number;
@@ -396,19 +384,11 @@ function HindsightSection({
   const ensure = (userId: string, name: string): Row => {
     let r = rows.get(userId);
     if (!r) {
-      r = { userId, name, eventPick: null, matchupPicks: {}, correct: 0, total: 0 };
+      r = { userId, name, matchupPicks: {}, correct: 0, total: 0 };
       rows.set(userId, r);
     }
     return r;
   };
-
-  for (const p of event.predictions) {
-    if (!p.pickedTeamId) continue;
-    const r = ensure(p.userId, p.user.name);
-    r.eventPick = p.pickedTeamId;
-    r.total += 1;
-    if (event.winnerTeamId && p.pickedTeamId === event.winnerTeamId) r.correct += 1;
-  }
 
   const settledMatchups = event.matchups.filter((m) => m.winnerTeamId);
   for (const m of settledMatchups) {
@@ -430,7 +410,7 @@ function HindsightSection({
         <div className="section-kicker">// Hindsight</div>
         <h2 className="text-lg font-bold text-ink tracking-tight mb-2">Predictions vs Reality</h2>
         <div className="card p-4 bg-paper text-sm text-ink-soft">
-          Nobody made a pick for this event.
+          Nobody made a matchup pick for this event.
         </div>
       </section>
     );
@@ -445,7 +425,6 @@ function HindsightSection({
           <thead>
             <tr className="border-b border-ink/10">
               <th className="text-left p-3 kicker">Player</th>
-              <th className="text-left p-3 kicker">Event Pick</th>
               {settledMatchups.map((m, i) => (
                 <th key={m.id} className="text-left p-3 kicker">
                   {m.label || `M${i + 1}`}
@@ -458,13 +437,6 @@ function HindsightSection({
             {list.map((r) => (
               <tr key={r.userId} className="border-b border-ink/5 last:border-0">
                 <td className="p-3 font-semibold text-ink">{r.name}</td>
-                <td className="p-3">
-                  <PickCell
-                    pickId={r.eventPick}
-                    winnerId={event.winnerTeamId}
-                    teamById={teamById}
-                  />
-                </td>
                 {settledMatchups.map((m) => (
                   <td key={m.id} className="p-3">
                     <PickCell
@@ -483,6 +455,81 @@ function HindsightSection({
         </table>
       </div>
     </section>
+  );
+}
+
+type EventOutlookTeam = { id: string; name: string; color: string; emoji: string | null };
+
+function EventOutlook({
+  teams,
+  totals,
+  totalCount,
+  winnerTeamId,
+}: {
+  teams: EventOutlookTeam[];
+  totals: Record<string, number>;
+  totalCount: number;
+  winnerTeamId: string | null;
+}) {
+  return (
+    <div className="card p-4 bg-paper space-y-3">
+      <div className="flex items-baseline justify-between gap-2">
+        <div className="kicker">Aggregated from matchup picks</div>
+        <span className="kicker">
+          {totalCount} PICK{totalCount === 1 ? "" : "S"}
+        </span>
+      </div>
+      {totalCount === 0 ? (
+        <p className="text-sm text-ink-soft">
+          No matchup picks yet. Open a matchup below to weigh in.
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {teams.map((t) => {
+            const count = totals[t.id] || 0;
+            const pct = totalCount === 0 ? 0 : Math.round((count / totalCount) * 100);
+            const isWinner = winnerTeamId === t.id;
+            const isLoser = winnerTeamId != null && winnerTeamId !== t.id;
+            return (
+              <div
+                key={t.id}
+                className={`rounded-lg border border-ink/10 p-3 bg-paper ${
+                  isLoser ? "opacity-60" : ""
+                }`}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span
+                      className="h-2.5 w-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: t.color }}
+                      aria-hidden
+                    />
+                    <span className="font-semibold text-ink truncate">
+                      {t.emoji} {t.name}
+                    </span>
+                    {isWinner && (
+                      <span className="badge bg-cactus-100 text-cactus-800 border-cactus-300">
+                        Won
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-baseline gap-1.5 shrink-0">
+                    <span className="stat-num text-2xl text-ink">{pct}%</span>
+                    <span className="kicker">{count}</span>
+                  </div>
+                </div>
+                <div className="mt-2 h-1 w-full bg-ink/5 rounded-full overflow-hidden">
+                  <div
+                    className="h-full transition-all"
+                    style={{ width: `${pct}%`, backgroundColor: t.color }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 
