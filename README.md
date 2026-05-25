@@ -49,7 +49,7 @@ npm run dev
 
 After seeding, the default admin is:
 
-- **email**: `admin@burtonvalley.local` (or whatever you put in `ADMIN_EMAIL`)
+- **email**: `admin@picklepalms.local` (or whatever you put in `ADMIN_EMAIL`)
 - **password**: `changeme123`
 
 **Change this password immediately** by signing in, deleting the seeded user

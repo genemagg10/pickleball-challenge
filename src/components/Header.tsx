@@ -27,11 +27,12 @@ const links = [
 export function Header({ user }: { user: HeaderUser }) {
   const pathname = usePathname();
   return (
-    <header className="bg-white border-b border-slate-200 sticky top-0 z-20">
+    <header className="bg-paper/80 backdrop-blur border-b border-ink/10 sticky top-0 z-20">
       <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-4">
-        <Link href="/" className="flex items-center gap-2 font-bold text-court">
-          <span aria-hidden>🥒</span>
-          <span className="hidden sm:inline">Burton Valley Dads</span>
+        <Link href="/" className="flex items-center gap-2 font-bold text-ink">
+          <span aria-hidden className="text-lg">🌴</span>
+          <span className="hidden sm:inline tracking-tight">Pickle Palms</span>
+          <span className="hidden sm:inline kicker text-ink-mute">/ 2026</span>
         </Link>
         <nav className="flex flex-1 items-center gap-1 overflow-x-auto">
           {links.map((l) => {
@@ -40,8 +41,10 @@ export function Header({ user }: { user: HeaderUser }) {
               <Link
                 key={l.href}
                 href={l.href}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap ${
-                  active ? "bg-court text-white" : "text-slate-700 hover:bg-slate-100"
+                className={`px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition ${
+                  active
+                    ? "bg-ink text-paper"
+                    : "text-ink-soft hover:text-ink hover:bg-paper-dark"
                 }`}
               >
                 {l.label}
@@ -51,10 +54,10 @@ export function Header({ user }: { user: HeaderUser }) {
           {user?.isAdmin && (
             <Link
               href="/admin"
-              className={`px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition ${
                 pathname?.startsWith("/admin")
-                  ? "bg-slate-800 text-white"
-                  : "text-slate-700 hover:bg-slate-100"
+                  ? "bg-ink text-paper"
+                  : "text-ink-soft hover:text-ink hover:bg-paper-dark"
               }`}
             >
               Admin
@@ -66,7 +69,7 @@ export function Header({ user }: { user: HeaderUser }) {
             <>
               <Link
                 href="/me"
-                className="hidden sm:flex items-center gap-2 text-slate-600 hover:text-slate-900"
+                className="hidden sm:flex items-center gap-2 text-ink-soft hover:text-ink"
                 title="Your profile"
               >
                 <span>{user.name}</span>
@@ -77,7 +80,7 @@ export function Header({ user }: { user: HeaderUser }) {
                     size="xs"
                   />
                 ) : (
-                  <span className="badge bg-slate-100 text-slate-600 px-1.5 py-0.5 text-[10px]">
+                  <span className="badge bg-paper-dark text-ink-soft">
                     Pick a team
                   </span>
                 )}

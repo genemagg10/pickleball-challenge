@@ -47,13 +47,16 @@ export function PredictionWidget({
   }
 
   return (
-    <div className="card p-4">
+    <div className="card p-4 bg-paper">
       <div className="flex items-baseline justify-between mb-3">
-        <h3 className="font-semibold">
-          {eventId ? "Who wins this event?" : "Who wins the whole thing?"}
-        </h3>
-        <span className="text-xs text-slate-500">
-          {totalCount} pick{totalCount === 1 ? "" : "s"}
+        <div>
+          <div className="kicker">Prediction Market</div>
+          <h3 className="font-semibold text-ink mt-0.5">
+            {eventId ? "Who wins this event?" : "Who wins the whole thing?"}
+          </h3>
+        </div>
+        <span className="kicker">
+          {totalCount} PICK{totalCount === 1 ? "" : "S"}
         </span>
       </div>
       <div className="space-y-2">
@@ -62,48 +65,62 @@ export function PredictionWidget({
           const pct = totalCount === 0 ? 0 : Math.round((count / totalCount) * 100);
           const isWinner = winnerTeamId === t.id;
           const isMine = myPick === t.id;
+          const isPending = pending === t.id;
           return (
             <button
               key={t.id}
               disabled={locked || pending !== null || !loggedIn}
               onClick={() => pick(t.id)}
-              className={`relative w-full text-left rounded-lg border p-3 overflow-hidden transition ${
-                isMine ? "border-court ring-2 ring-court" : "border-slate-200"
-              } ${locked || !loggedIn ? "opacity-90" : "hover:border-slate-400"}`}
+              className={`relative w-full text-left rounded-lg border p-3 transition ${
+                isMine
+                  ? "border-ink bg-paper-dark/60"
+                  : "border-ink/10 bg-paper hover:border-ink/40"
+              } ${locked || !loggedIn ? "opacity-90 cursor-not-allowed" : ""}`}
             >
-              <div
-                className="absolute inset-y-0 left-0"
-                style={{
-                  width: `${pct}%`,
-                  backgroundColor: t.color,
-                  opacity: 0.18,
-                }}
-                aria-hidden
-              />
-              <div className="relative flex items-center justify-between gap-3">
-                <div className="font-medium" style={{ color: t.color }}>
-                  {t.emoji} {t.name}
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span
+                    className="h-2.5 w-2.5 rounded-full shrink-0"
+                    style={{ backgroundColor: t.color }}
+                    aria-hidden
+                  />
+                  <span className="font-semibold text-ink truncate">
+                    {t.emoji} {t.name}
+                  </span>
                   {isWinner && (
-                    <span className="ml-2 badge bg-emerald-100 text-emerald-800">
-                      Winner
+                    <span className="badge bg-emerald-100 text-emerald-800 border-emerald-300">
+                      Won
                     </span>
                   )}
+                  {isMine && !isWinner && (
+                    <span className="badge bg-ink text-paper border-ink">Your pick</span>
+                  )}
+                  {isPending && (
+                    <span className="kicker">…saving</span>
+                  )}
                 </div>
-                <div className="text-sm tabular-nums">
-                  {pct}% <span className="text-slate-500">· {count}</span>
+                <div className="flex items-baseline gap-1.5 shrink-0">
+                  <span className="stat-num text-2xl text-ink">{pct}%</span>
+                  <span className="kicker">{count}</span>
                 </div>
+              </div>
+              <div className="mt-2 h-1 w-full bg-ink/5 rounded-full overflow-hidden">
+                <div
+                  className="h-full transition-all"
+                  style={{ width: `${pct}%`, backgroundColor: t.color }}
+                />
               </div>
             </button>
           );
         })}
       </div>
-      <div className="mt-3 text-xs text-slate-500">
+      <div className="mt-3 kicker">
         {!loggedIn ? (
-          <a href="/login" className="text-court underline">
+          <a href="/login" className="text-ink underline underline-offset-2">
             Sign in to make a pick
           </a>
         ) : locked ? (
-          "Picks are locked — event is final."
+          "Picks locked — event is final."
         ) : myPick ? (
           "Your pick is saved. Tap another to change it."
         ) : (

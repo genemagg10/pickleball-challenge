@@ -15,7 +15,7 @@ async function main() {
     create: { name: "Smashers", color: "#dc2626", emoji: "🔴" },
   });
 
-  const adminEmail = process.env.ADMIN_EMAIL || "admin@burtonvalley.local";
+  const adminEmail = process.env.ADMIN_EMAIL || "admin@picklepalms.local";
   const passwordHash = await bcrypt.hash("changeme123", 10);
   await prisma.user.upsert({
     where: { email: adminEmail },
@@ -36,7 +36,7 @@ async function main() {
           name: "Pickleball Round Robin",
           description:
             "The main event. Doubles matchups across both teams. Each game to 11, win by 2.",
-          location: "Burton Valley Courts",
+          location: "Palm Courts",
           pointsValue: 10,
           sortOrder: 1,
         },
