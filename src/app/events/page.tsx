@@ -12,7 +12,12 @@ export default async function EventsPage() {
     prisma.event.findMany({
       include: {
         winnerTeam: true,
-        matchups: { select: { winnerTeamId: true } },
+        matchups: {
+          select: {
+            winnerTeamId: true,
+            predictions: { select: { pickedTeamId: true } },
+          },
+        },
       },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     }),

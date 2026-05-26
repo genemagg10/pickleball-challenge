@@ -27,7 +27,7 @@ export function Scoreboard({
         <div className="flex flex-col items-center justify-center px-3 py-4 min-w-[96px] border-x border-ink/10">
           <div className="kicker">Status</div>
           <div className="mt-1 text-2xl" aria-hidden>
-            {champion ? "🏆" : leader ? "🔥" : "⚖️"}
+            {champion ? "🏆" : leader ? (leader.emoji ?? "▲") : "⚖️"}
           </div>
           <div className="mt-0.5 font-mono text-[11px] font-semibold uppercase tracking-wider text-ink">
             {champion ? "FINAL" : leader ? `+${diff} LEAD` : "TIED"}
@@ -47,7 +47,6 @@ function TeamCell({ t, champion }: { t: TeamStanding; champion: boolean }) {
   return (
     <div className="p-4 text-center flex flex-col items-center justify-between gap-1">
       <div className="kicker flex items-center justify-center gap-1.5 flex-wrap">
-        <span aria-hidden>{t.emoji ?? "■"}</span>
         <span>{t.name}</span>
       </div>
       <div
