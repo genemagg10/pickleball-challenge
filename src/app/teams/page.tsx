@@ -19,6 +19,7 @@ export default async function TeamsPage() {
             include: {
               matchup: {
                 select: {
+                  id: true,
                   winnerTeamId: true,
                   event: { select: { pointsValue: true } },
                 },
@@ -33,17 +34,26 @@ export default async function TeamsPage() {
     orderBy: { createdAt: "asc" },
   });
 
-  // Points contributed per player, computed once
-  const pointsByPlayer = new Map<string, number>();
+  // Winning-matchup participation per player, plus each team's real totals.
+  // Team points are summed once per distinct winning matchup so doubles
+  // partners don't double-count toward the team total (matches the scoreboard).
+  const winsByPlayer = new Map<string, number>();
+  const teamTotals = new Map<string, { wins: number; points: number }>();
   for (const t of teams) {
+    const wonMatchupPts = new Map<string, number>();
     for (const p of t.players) {
-      const pts = p.matchupParticipations
-        .filter((mp) => mp.matchup.winnerTeamId === t.id)
-        .reduce((s, mp) => s + mp.matchup.event.pointsValue, 0);
-      pointsByPlayer.set(p.id, pts);
+      let pWins = 0;
+      for (const mp of p.matchupParticipations) {
+        if (mp.matchup.winnerTeamId !== t.id) continue;
+        pWins += 1;
+        wonMatchupPts.set(mp.matchup.id, mp.matchup.event.pointsValue);
+      }
+      winsByPlayer.set(p.id, pWins);
     }
+    let points = 0;
+    for (const v of wonMatchupPts.values()) points += v;
+    teamTotals.set(t.id, { wins: wonMatchupPts.size, points });
   }
-  const maxPts = Math.max(1, ...Array.from(pointsByPlayer.values()));
 
   return (
     <div className="space-y-8">
@@ -61,15 +71,12 @@ export default async function TeamsPage() {
         </div>
         <div className="grid sm:grid-cols-2 gap-4">
           {teams.map((t) => {
+            const totals = teamTotals.get(t.id) ?? { wins: 0, points: 0 };
             const sortedPlayers = [...t.players].sort((a, b) => {
-              const aPts = pointsByPlayer.get(a.id) ?? 0;
-              const bPts = pointsByPlayer.get(b.id) ?? 0;
-              return bPts - aPts || a.name.localeCompare(b.name);
+              const aWins = winsByPlayer.get(a.id) ?? 0;
+              const bWins = winsByPlayer.get(b.id) ?? 0;
+              return bWins - aWins || a.name.localeCompare(b.name);
             });
-            const teamTotalPts = sortedPlayers.reduce(
-              (s, p) => s + (pointsByPlayer.get(p.id) ?? 0),
-              0
-            );
             return (
               <div
                 key={t.id}
@@ -82,12 +89,13 @@ export default async function TeamsPage() {
                       {t.emoji} {t.name}
                     </h3>
                     <span className="stat-num text-xl text-ink">
-                      {teamTotalPts}{" "}
+                      {totals.points}{" "}
                       <span className="kicker">PTS</span>
                     </span>
                   </div>
                   <p className="kicker mt-0.5">
                     {t.players.length} player{t.players.length === 1 ? "" : "s"} ·{" "}
+                    {totals.wins} matchup{totals.wins === 1 ? "" : "s"} won ·{" "}
                     {t._count.fans} fan{t._count.fans === 1 ? "" : "s"} ·{" "}
                     {t._count.championPicks} champion pick
                     {t._count.championPicks === 1 ? "" : "s"}
@@ -97,8 +105,9 @@ export default async function TeamsPage() {
                       <li className="text-ink-soft">No players yet.</li>
                     ) : (
                       sortedPlayers.map((p) => {
-                        const pts = pointsByPlayer.get(p.id) ?? 0;
-                        const pct = (pts / maxPts) * 100;
+                        const pWins = winsByPlayer.get(p.id) ?? 0;
+                        const pct =
+                          totals.wins === 0 ? 0 : (pWins / totals.wins) * 100;
                         return (
                           <li key={p.id}>
                             <div className="flex items-center justify-between gap-2">
@@ -121,12 +130,18 @@ export default async function TeamsPage() {
                                   <span className="kicker">@{p.user.name}</span>
                                 )}
                                 <span className="font-semibold text-ink tabular-nums">
-                                  {pts}{" "}
-                                  <span className="kicker">PTS</span>
+                                  {pWins}
+                                  <span className="text-ink-soft">
+                                    /{totals.wins}
+                                  </span>{" "}
+                                  <span className="kicker">WINS</span>
                                 </span>
                               </span>
                             </div>
-                            <div className="mt-1 h-1 w-full bg-ink/5 rounded-full overflow-hidden">
+                            <div
+                              className="mt-1 h-1 w-full bg-ink/5 rounded-full overflow-hidden"
+                              title={`In ${pWins} of ${totals.wins} winning matchups`}
+                            >
                               <div
                                 className="h-full"
                                 style={{
