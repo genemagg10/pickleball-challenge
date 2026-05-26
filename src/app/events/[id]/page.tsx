@@ -312,25 +312,42 @@ function EventScoreBar({
     }
   }
   const totalAwarded = totalSettled * pointsValue;
+  const totalForBar = teams.reduce(
+    (s, t) => s + (wins[t.id] ?? 0) * pointsValue,
+    0
+  );
 
   return (
     <div className="mt-3 card p-3 bg-paper">
-      <div className="flex items-baseline justify-between mb-2">
+      <div className="mb-3">
         <div className="kicker">Points from this event</div>
-        <div className="kicker">
-          {totalSettled}/{totalMatchups} MATCHUPS SETTLED · {totalAwarded} PTS AWARDED
+        <div className="kicker mt-0.5 text-ink-soft">
+          {totalSettled}/{totalMatchups} SETTLED · {totalAwarded} PTS AWARDED
         </div>
       </div>
-      <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${teams.length}, minmax(0,1fr))` }}>
+      <div className="flex w-full h-2.5 rounded-full overflow-hidden bg-ink/5 mb-3">
+        {totalForBar === 0 ? null : (
+          teams.map((t) => {
+            const share = ((wins[t.id] ?? 0) * pointsValue / totalForBar) * 100;
+            return (
+              <div
+                key={t.id}
+                style={{ width: `${share}%`, backgroundColor: t.color }}
+              />
+            );
+          })
+        )}
+      </div>
+      <div className="grid gap-2 sm:grid-cols-2">
         {teams.map((t) => {
           const w = wins[t.id] ?? 0;
           const pts = w * pointsValue;
           return (
             <div
               key={t.id}
-              className="rounded-md border border-ink/10 p-2 flex items-center justify-between gap-2"
+              className="rounded-md border border-ink/10 p-3 flex items-center justify-between gap-3"
             >
-              <div className="flex items-center gap-1.5 min-w-0">
+              <div className="flex items-center gap-2 min-w-0">
                 <span
                   className="h-2.5 w-2.5 rounded-full shrink-0"
                   style={{ backgroundColor: t.color }}
@@ -341,8 +358,12 @@ function EventScoreBar({
                 </span>
               </div>
               <div className="flex items-baseline gap-1.5 shrink-0">
-                <span className="stat-num text-xl text-ink">{pts}</span>
-                <span className="kicker">{w} WIN{w === 1 ? "" : "S"}</span>
+                <span className="stat-num text-2xl text-ink leading-none">
+                  {pts}
+                </span>
+                <span className="kicker">
+                  {w} WIN{w === 1 ? "" : "S"}
+                </span>
               </div>
             </div>
           );
