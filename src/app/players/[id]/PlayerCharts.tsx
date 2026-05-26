@@ -6,6 +6,7 @@ import {
   Cell,
   Pie,
   PieChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -103,12 +104,18 @@ export function PointsByEventBar({
       </div>
     );
   }
+  const chartData = data.map((d) => ({
+    event: d.event,
+    points: d.points,
+    lost: -d.lost,
+  }));
   return (
     <div className="h-48">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
-          data={data}
+          data={chartData}
           margin={{ top: 8, right: 8, bottom: 8, left: 0 }}
+          stackOffset="sign"
         >
           <XAxis
             dataKey="event"
@@ -124,7 +131,9 @@ export function PointsByEventBar({
             stroke="rgba(15,15,15,0.15)"
             width={28}
             allowDecimals={false}
+            tickFormatter={(v: number) => String(Math.abs(v))}
           />
+          <ReferenceLine y={0} stroke="rgba(15,15,15,0.35)" />
           <Tooltip
             contentStyle={{
               background: "#f4efe5",
@@ -133,9 +142,20 @@ export function PointsByEventBar({
               fontSize: 12,
             }}
             cursor={{ fill: "rgba(15,15,15,0.04)" }}
+            formatter={(v, name) => [Math.abs(Number(v)), name]}
           />
-          <Bar dataKey="points" name="Pts won" fill={teamColor} radius={[3, 3, 0, 0]} />
-          <Bar dataKey="lost" name="Pts conceded" fill={negative} radius={[3, 3, 0, 0]} />
+          <Bar
+            dataKey="points"
+            name="Pts won"
+            fill={teamColor}
+            radius={[3, 3, 0, 0]}
+          />
+          <Bar
+            dataKey="lost"
+            name="Pts conceded"
+            fill={negative}
+            radius={[0, 0, 3, 3]}
+          />
         </BarChart>
       </ResponsiveContainer>
     </div>
