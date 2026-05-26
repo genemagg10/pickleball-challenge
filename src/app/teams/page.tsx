@@ -106,6 +106,7 @@ export default async function TeamsPage() {
                                 href={`/players/${p.id}`}
                                 className="text-ink font-medium hover:underline underline-offset-2 min-w-0 truncate flex items-center gap-1"
                               >
+                                <span className="truncate">{p.name}</span>
                                 {p.isCaptain && (
                                   <span
                                     aria-label="Team captain"
@@ -114,7 +115,6 @@ export default async function TeamsPage() {
                                     👑
                                   </span>
                                 )}
-                                <span className="truncate">{p.name}</span>
                               </Link>
                               <span className="flex items-center gap-2 text-xs shrink-0">
                                 {p.user && (

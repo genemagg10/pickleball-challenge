@@ -201,9 +201,6 @@ export default async function EventDetailPage({
                                   href={`/players/${p.id}`}
                                   className="hover:underline underline-offset-2"
                                 >
-                                  {p.isCaptain && (
-                                    <span aria-label="captain" title="Captain">👑 </span>
-                                  )}
                                   {p.name}
                                 </Link>
                               </span>
@@ -232,9 +229,6 @@ export default async function EventDetailPage({
                                   href={`/players/${p.id}`}
                                   className="hover:underline underline-offset-2"
                                 >
-                                  {p.isCaptain && (
-                                    <span aria-label="captain" title="Captain">👑 </span>
-                                  )}
                                   {p.name}
                                 </Link>
                               </span>
