@@ -175,10 +175,10 @@ function CommentCard({
               href={`/players/${item.user.player.id}`}
               className="font-semibold text-ink hover:underline underline-offset-2 flex items-center gap-1"
             >
+              <span>{item.user.name}</span>
               {item.user.player.isCaptain && (
                 <span aria-label="captain" title="Team captain">👑</span>
               )}
-              <span>{item.user.name}</span>
             </Link>
           ) : (
             <span className="font-semibold text-ink">{item.user.name}</span>
